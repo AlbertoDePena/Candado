@@ -10,6 +10,7 @@ namespace Candado.Desktop.ViewModels
 {
     public class ShellViewModel : Screen, IShell
     {
+        private const string PasswordBoxControl = "PasswordBoxControl";
         private readonly IAccountService AccountService;
         private readonly IDialogService DialogService;
         private AccountViewModel _account;
@@ -55,20 +56,13 @@ namespace Candado.Desktop.ViewModels
 
         public void DeleteAccount()
         {
-            try
-            {
-                if (Account == null) return;
+            if (Account == null) return;
 
-                if (!DialogService.Confirm("Are you sure you want to delete this account?")) return;
+            if (!DialogService.Confirm("Are you sure you want to delete this account?")) return;
 
-                Accounts.Remove(Account);
+            Accounts.Remove(Account);
 
-                Account = Accounts.FirstOrDefault();
-            }
-            catch (Exception e)
-            {
-                DialogService.Error(e.Message);
-            }
+            Account = Accounts.FirstOrDefault();
         }
 
         public void SaveChanges()
@@ -122,7 +116,7 @@ namespace Candado.Desktop.ViewModels
 
             if (frameworkElement == null) return;
 
-            PasswordBox = frameworkElement.FindName("PasswordBoxControl") as PasswordBox;
+            PasswordBox = frameworkElement.FindName(PasswordBoxControl) as PasswordBox;
 
             if (PasswordBox == null)
             {
@@ -157,6 +151,11 @@ namespace Candado.Desktop.ViewModels
             if (Account == null) return;
 
             Account.Password = PasswordBox.Password;
+        }
+
+        public override void CanClose(Action<bool> callback)
+        {
+            callback(DialogService.Confirm("Are you sure you want to exit? You might have unsaved changes."));
         }
     }
 }

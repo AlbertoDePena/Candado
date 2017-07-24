@@ -80,8 +80,10 @@
                 <PasswordBox x:Name="PasswordBoxControl" />
             </DockPanel>
             
-            <TextBox Grid.Row="3" Grid.Column="2" Style="{StaticResource MultiLine}" ToolTip="Memo"
+            <ScrollViewer Grid.Row="3" Grid.Column="2" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <TextBox Style="{StaticResource MultiLine}" ToolTip="Memo"
                      Text="{Binding Account.Memo, UpdateSourceTrigger=PropertyChanged}" />
+            </ScrollViewer>
         </Grid>
     </DockPanel>
 </UserControl>
