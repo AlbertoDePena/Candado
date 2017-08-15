@@ -12,7 +12,7 @@ type IAccountService =
     abstract member SaveAll : Account [] -> unit
     abstract member GetSecretKey : unit -> string
 
-type AccountService(crypto: ICryptoService) =
+type AccountService(cryptoService: ICryptoService) =
     [<Literal>]
     let AppSettingKey = "Candado:StorageDirectory"
 
@@ -25,14 +25,13 @@ type AccountService(crypto: ICryptoService) =
     [<Literal>]
     let RegistryField = "SecretKey"
 
-    let getSecretKey() =
-        let createRegistryKey =
-            fun () ->
-                let guid = Guid.NewGuid().ToString()
-                let registryKey = Registry.CurrentUser.CreateSubKey(RegistryKey)
-                registryKey.SetValue(RegistryField, guid)
-                registryKey
+    let createRegistryKey() =
+        let guid = Guid.NewGuid().ToString()
+        let registryKey = Registry.CurrentUser.CreateSubKey(RegistryKey)
+        registryKey.SetValue(RegistryField, guid)
+        registryKey
 
+    let getSecretKey() =
         let registryKey = Registry.CurrentUser.OpenSubKey(RegistryKey)
         if isNull registryKey 
         then createRegistryKey().GetValue(RegistryField).ToString()
@@ -81,7 +80,7 @@ type AccountService(crypto: ICryptoService) =
             let mapAccount =
                 fun account -> 
                     if String.IsNullOrEmpty(account.Password) then account
-                    else { account with Password = crypto.Decrypt(key, account.Password)}
+                    else { account with Password = cryptoService.Decrypt(key, account.Password)}
             match getAccounts() with
             | None -> fail()
             | Some accounts -> accounts |> Array.map mapAccount
@@ -95,7 +94,7 @@ type AccountService(crypto: ICryptoService) =
                 let mapAccount =
                     fun account -> 
                         if String.IsNullOrEmpty(account.Password) then account
-                        else { account with Password = crypto.Encrypt(key, account.Password)}
+                        else { account with Password = cryptoService.Encrypt(key, account.Password)}
                 let json = accounts |> Array.map mapAccount |> JsonConvert.SerializeObject
                 File.WriteAllText(filePath, json)
 

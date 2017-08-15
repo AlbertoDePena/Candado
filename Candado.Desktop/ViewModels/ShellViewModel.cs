@@ -42,7 +42,7 @@ namespace Candado.Desktop.ViewModels
         }
 
         public BindableCollection<AccountViewModel> Accounts { get; }
-
+        
         private PasswordBox PasswordBox { get; set; }
 
         public void AddAccount()
@@ -52,6 +52,11 @@ namespace Candado.Desktop.ViewModels
             Accounts.Add(viewModel);
 
             Account = viewModel;
+        }
+
+        public override void CanClose(Action<bool> callback)
+        {
+            callback(DialogService.Confirm("Are you sure you want to exit? You might have unsaved changes."));
         }
 
         public void DeleteAccount()
@@ -102,8 +107,8 @@ namespace Candado.Desktop.ViewModels
             if (Account == null) return;
 
             var message = string.IsNullOrEmpty(Account.Password) ?
-                $"No password available for {Account.AccountName}." :
-                $"{Account.AccountName}: {Account.Password}";
+                $"No password available for account '{Account.AccountName}'" :
+                $"Password for account '{Account.AccountName}':\n\n{Account.Password}";
 
             DialogService.Notify(message);
         }
@@ -128,12 +133,12 @@ namespace Candado.Desktop.ViewModels
             PasswordBox.PasswordChanged -= PasswordBox_PasswordChanged;
             PasswordBox.PasswordChanged += PasswordBox_PasswordChanged;
         }
-
+        
         private void LoadAccounts()
         {
             try
             {
-                var items = AccountService.GetAll();
+                var items = AccountService.GetAll().OrderBy(x => x.AccountName);
 
                 foreach (var item in items)
                 {
@@ -151,11 +156,6 @@ namespace Candado.Desktop.ViewModels
             if (Account == null) return;
 
             Account.Password = PasswordBox.Password;
-        }
-
-        public override void CanClose(Action<bool> callback)
-        {
-            callback(DialogService.Confirm("Are you sure you want to exit? You might have unsaved changes."));
         }
     }
 }

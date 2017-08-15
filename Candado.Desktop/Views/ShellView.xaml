@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Candado.Desktop"
              xmlns:cal="http://www.caliburnproject.org"
              mc:Ignorable="d" 
              d:DesignHeight="300" 
@@ -55,7 +54,8 @@
             </Grid.RowDefinitions>
 
             <ListBox Grid.Row="0" Grid.RowSpan="4" Grid.Column="0" 
-                     ItemsSource="{Binding Accounts}" SelectedItem="{Binding Account}">
+                     ItemsSource="{Binding Accounts}" SelectedItem="{Binding Account}"
+                     cal:Message.Attach="[Event MouseDoubleClick] = [Action ViewAccount()]">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Label Content="{Binding AccountName}"/>

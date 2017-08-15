@@ -12,7 +12,6 @@ namespace Candado.Desktop
             window.SizeToContent = SizeToContent.Manual;
             window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             window.ResizeMode = ResizeMode.CanResizeWithGrip;
-
             window.Height = 450;
             window.Width = 450;
 
