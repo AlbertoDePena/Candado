@@ -1,8 +1,9 @@
 ﻿namespace Candado.Core
 
 type Account = { 
-    AccountName: string; 
+    Id: int;
+    Name: string; 
     UserName: string; 
     Password: string; 
-    Memo: string; 
+    Description: string; 
 }

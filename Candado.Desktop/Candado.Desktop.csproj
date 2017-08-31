@@ -46,9 +46,6 @@
     <Reference Include="Caliburn.Micro.Platform.Core, Version=3.0.3.0, Culture=neutral, PublicKeyToken=8e5891231f2ed21f, processorArchitecture=MSIL">
       <HintPath>..\packages\Caliburn.Micro.3.1.0\lib\net45\Caliburn.Micro.Platform.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Crypto.Service">
-      <HintPath>..\Binaries\Crypto.Service\1.0.6411.20365\Crypto.Service.dll</HintPath>
-    </Reference>
     <Reference Include="FSharp.Core, Version=4.4.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\4.4.1.0\FSharp.Core.dll</HintPath>
@@ -81,7 +78,9 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Contracts\ICryptoService.cs" />
     <Compile Include="Contracts\IDialogService.cs" />
+    <Compile Include="CryptoService.cs" />
     <Compile Include="CustomWindowManager.cs" />
     <Compile Include="DialogService.cs" />
     <Compile Include="ViewModels\AccountViewModel.cs" />

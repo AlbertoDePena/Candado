@@ -1,104 +1,126 @@
 ﻿namespace Candado.Core
 
 open System
-open System.IO
-open System.Configuration
-open Newtonsoft.Json
 open Microsoft.Win32
-open Crypto.Service
+open ROP.Micro
+open System.Data.SqlClient
+open System.Configuration
+open System.Text
 
-type IAccountService =
-    abstract member GetAll : unit -> Account []
-    abstract member SaveAll : Account [] -> unit
-    abstract member GetSecretKey : unit -> string
+type ISecretKeyProvider =
+    abstract member GetSecretKey : unit -> string;
 
-type AccountService(cryptoService: ICryptoService) =
-    [<Literal>]
-    let AppSettingKey = "Candado:StorageDirectory"
-
-    [<Literal>]
-    let FileName = "accounts.json"
-
+type SecretKeyProvider () =
     [<Literal>]
     let RegistryKey = "Software\Candado"
 
     [<Literal>]
     let RegistryField = "SecretKey"
-
-    let createRegistryKey() =
-        let guid = Guid.NewGuid().ToString()
-        let registryKey = Registry.CurrentUser.CreateSubKey(RegistryKey)
-        registryKey.SetValue(RegistryField, guid)
-        registryKey
-
-    let getSecretKey() =
-        let registryKey = Registry.CurrentUser.OpenSubKey(RegistryKey)
-        if isNull registryKey 
-        then createRegistryKey().GetValue(RegistryField).ToString()
-        else registryKey.GetValue(RegistryField).ToString()
-        
-    let getStorageDirectory() =
-        let setting = ConfigurationManager.AppSettings.[AppSettingKey]
-        if String.IsNullOrEmpty(setting) 
-        then None
-        else Some setting
+    
+    interface ISecretKeyProvider with 
+        member __.GetSecretKey () =
+            let registryKey = Registry.CurrentUser.OpenSubKey(RegistryKey)
+            if isNull registryKey 
+            then failwith (sprintf "Registry key '%s' with field '%s' has no value" RegistryKey RegistryField)
+            else registryKey.GetValue(RegistryField).ToString()
             
-    let getFilePath directoryOption =
-        match directoryOption with
-        | None -> None
-        | Some directory ->
-            let filePath = (sprintf "%s\%s" directory FileName)
-            let result = Some filePath
-            if File.Exists(filePath) then result
-            else
-                use writer = File.CreateText(filePath)
-                writer.Write("[]")
-                result
+type IAccountService =
+    abstract member GetAll : unit -> Account []
+    abstract member SaveAll : Account[] -> unit
 
-    let readAllText filePathOption =
-        match filePathOption with
-        | None -> None
-        | Some filePath -> Some (File.ReadAllText(filePath))
+type AccountService () =
+    [<Literal>]
+    let BaseQuery = "SELECT [Id],[Name],[UserName],[Password],[Description] FROM [dbo].[Account]"
 
-    let deserialize textOption =
-        match textOption with
-        | None -> None
-        | Some text -> Some (JsonConvert.DeserializeObject<Account []>(text))
-    
-    let getAccounts = 
-        getStorageDirectory 
-        >> getFilePath 
-        >> readAllText 
-        >> deserialize
-    
-    let fail() = 
-        failwith "Failed to get accounts. Make sure storage directory exists."
+    let getDbConnString() =
+        ConfigurationManager.ConnectionStrings.["Candado:DbConnString"].ConnectionString;
+
+    let validateDbConnString dbConnString =
+        if String.IsNullOrEmpty(dbConnString) then
+            fail "DB connection string is empty"
+        else succeed dbConnString
+        
+    let rec readAsync (reader: SqlDataReader) (mapFunc: SqlDataReader -> 'T) (list: System.Collections.Generic.List<'T>) =
+        async {
+            let! cont = Async.AwaitTask(reader.ReadAsync())
+            if cont then
+                reader |> mapFunc |> list.Add
+                return! readAsync reader mapFunc list
+            else return list
+        }
+
+    let executeQuery (dbConnString: string, query: string) =
+        async {
+            use conn = new SqlConnection(dbConnString)
+            let! connected = Async.AwaitIAsyncResult(conn.OpenAsync())
+            if not <| connected then failwith "Failed to connect to database"
+            use cmd = new SqlCommand(query, conn)
+            return cmd.ExecuteNonQuery()
+        }
+
+    let executeQueryWithResult (dbConnString: string, query: string) =
+        let mapFunc (reader: SqlDataReader) =
+            { Id = reader.GetInt32(0); 
+              Name = reader.GetString(1); 
+              UserName = reader.GetString(2); 
+              Password = reader.GetString(3);
+              Description = reader.GetString(4); }
+
+        async {
+            use conn = new SqlConnection(dbConnString)
+            let! connected = Async.AwaitIAsyncResult(conn.OpenAsync())
+            if not <| connected then failwith "Failed to connect to database"
+            use cmd = new SqlCommand(query, conn)
+            use! reader = Async.AwaitTask(cmd.ExecuteReaderAsync())
+            let! result = readAsync reader mapFunc (System.Collections.Generic.List<Account>())
+            return result.ToArray()
+        }
         
     interface IAccountService with
-        member this.GetAll() =
-            let key = getSecretKey()
-            let mapAccount =
-                fun account -> 
-                    if String.IsNullOrEmpty(account.Password) then account
-                    else { account with Password = cryptoService.Decrypt(key, account.Password)}
-            match getAccounts() with
-            | None -> fail()
-            | Some accounts -> accounts |> Array.map mapAccount
+        member __.GetAll() =
+            let withQuery dbConnString =
+                (dbConnString, BaseQuery)
+                
+            let tryExecuteQuery =
+                tryCatch executeQueryWithResult (fun ex -> (sprintf "Failed to get accounts: %s" ex.Message))
 
-        member this.SaveAll(accounts: Account []) =
-            let func = getStorageDirectory >> getFilePath
-            match func() with
-            | None -> fail()
-            | Some filePath ->
-                let key = getSecretKey()
-                let mapAccount =
-                    fun account -> 
-                        if String.IsNullOrEmpty(account.Password) then account
-                        else { account with Password = cryptoService.Encrypt(key, account.Password)}
-                let json = accounts |> Array.map mapAccount |> JsonConvert.SerializeObject
-                File.WriteAllText(filePath, json)
+            let getAccounts =
+                validateDbConnString
+                >> map withQuery
+                >> bind tryExecuteQuery
 
-        member this.GetSecretKey() = getSecretKey()
+            match getDbConnString() |> getAccounts with
+            | Success task -> Async.RunSynchronously(task)
+            | Failure error -> failwith error
+
+        member __.SaveAll accounts =
+            let stringBuilder = StringBuilder("BEGIN")
+
+            let buildQuery account =
+                stringBuilder.AppendLine(String.Format(@" IF (NOT EXISTS (SELECT [Id] FROM [dbo].[Account] WHERE [Id] = {0}))
+	                                        BEGIN INSERT INTO [dbo].[Account] ([Name],[UserName],[Password],[Description]) VALUES ('{1}','{2}','{3}','{4}')
+	                                        END ELSE BEGIN
+		                                        UPDATE [dbo].[Account] SET [Name] = '{1}', [UserName] = '{2}', [Password] = '{3}', [Description] = '{4}'
+		                                        WHERE [Id] = {0} END", account.Id, account.Name, account.UserName, account.Password, account.Description)) |> ignore
+
+            accounts |> Array.iter buildQuery
+
+            let query = stringBuilder.AppendLine("END").ToString()
+
+            let withQuery dbConnString =
+                (dbConnString, query)
+
+            let tryExecuteQuery =
+                tryCatch executeQuery (fun ex -> (sprintf "Failed to get accounts: %s" ex.Message))
+
+            let saveAccounts =
+                validateDbConnString
+                >> map withQuery
+                >> bind tryExecuteQuery
+            
+            match getDbConnString() |> saveAccounts with
+            | Success task -> Async.RunSynchronously(task) |> ignore
+            | Failure error -> failwith error
 
                 
                 

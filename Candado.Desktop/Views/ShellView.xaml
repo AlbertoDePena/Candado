@@ -58,7 +58,7 @@
                      cal:Message.Attach="[Event MouseDoubleClick] = [Action ViewAccount()]">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <Label Content="{Binding AccountName}"/>
+                        <Label Content="{Binding Name}"/>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
@@ -67,7 +67,7 @@
             
             <DockPanel Grid.Row="0" Grid.Column="2" ToolTip="Account Name">
                 <Image Source="../Images/account.png" />
-                <TextBox Text="{Binding Account.AccountName, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Text="{Binding Account.Name, UpdateSourceTrigger=PropertyChanged}" />
             </DockPanel>
 
             <DockPanel Grid.Row="1" Grid.Column="2" ToolTip="User Name / Email">
@@ -81,8 +81,8 @@
             </DockPanel>
             
             <ScrollViewer Grid.Row="3" Grid.Column="2" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                <TextBox Style="{StaticResource MultiLine}" ToolTip="Memo"
-                     Text="{Binding Account.Memo, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Style="{StaticResource MultiLine}" ToolTip="Description"
+                     Text="{Binding Account.Description, UpdateSourceTrigger=PropertyChanged}" />
             </ScrollViewer>
         </Grid>
     </DockPanel>

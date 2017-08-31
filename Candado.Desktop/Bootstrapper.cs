@@ -2,7 +2,6 @@
 using Candado.Core;
 using Candado.Desktop.Contracts;
 using Candado.Desktop.ViewModels;
-using Crypto.Service;
 using System;
 using System.Collections.Generic;
 using System.Windows;
@@ -26,6 +25,7 @@ namespace Candado.Desktop
             container = new SimpleContainer()
                             .Singleton<IWindowManager, CustomWindowManager>()
                             .Singleton<IDialogService, DialogService>()
+                            .Singleton<ISecretKeyProvider, SecretKeyProvider>()
                             .Singleton<IAccountService, AccountService>()
                             .Singleton<ICryptoService, CryptoService>()
                             .PerRequest<IShell, ShellViewModel>();

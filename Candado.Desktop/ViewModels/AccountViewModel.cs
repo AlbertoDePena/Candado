@@ -6,39 +6,45 @@ namespace Candado.Desktop.ViewModels
 {
     public class AccountViewModel : PropertyChangedBase
     {
-        private string _accountName;
-        private string _userName;
+        private readonly int Id;
+        private string _description;
+        private string _name;
         private string _password;
-        private string _memo;
+        private string _userName;
 
         public AccountViewModel(Account account)
         {
-            if (account == null) throw new ArgumentNullException(nameof(account));
+            if (account == null)
+                throw new ArgumentNullException(nameof(account));
 
-            if (string.IsNullOrEmpty(account.AccountName)) throw new ArgumentNullException(nameof(account.AccountName));
+            if (string.IsNullOrEmpty(account.Name))
+                throw new ArgumentNullException(nameof(account.Name));
 
-            _accountName = account.AccountName;
+            Id = account.Id;
+            _name = account.Name;
             _userName = account.UserName;
             _password = account.Password;
-            _memo = account.Memo;
+            _description = account.Description;
         }
 
-        public string AccountName
+        public string Description
         {
-            get { return _accountName; }
+            get { return _description; }
             set
             {
-                _accountName = value;
+                _description = value;
                 NotifyOfPropertyChange();
             }
         }
 
-        public string UserName
+        public Account Model => new Account(Id, Name, UserName, Password, Description);
+
+        public string Name
         {
-            get { return _userName; }
+            get { return _name; }
             set
             {
-                _userName = value;
+                _name = value;
                 NotifyOfPropertyChange();
             }
         }
@@ -53,18 +59,15 @@ namespace Candado.Desktop.ViewModels
             }
         }
 
-        public string Memo
+        public string UserName
         {
-            get { return _memo; }
+            get { return _userName; }
             set
             {
-                _memo = value;
+                _userName = value;
                 NotifyOfPropertyChange();
             }
         }
-
-        public bool CanSave() => !string.IsNullOrEmpty(AccountName);
-
-        public Account Model => new Account(AccountName, UserName, Password, Memo);
+        public bool CanSave() => !string.IsNullOrEmpty(Name);
     }
 }

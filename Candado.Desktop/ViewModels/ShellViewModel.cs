@@ -13,13 +13,17 @@ namespace Candado.Desktop.ViewModels
         private const string PasswordBoxControl = "PasswordBoxControl";
         private readonly IAccountService AccountService;
         private readonly IDialogService DialogService;
+        private readonly ICryptoService CryptoService;
         private AccountViewModel _account;
 
-        public ShellViewModel(IAccountService accountService, IDialogService dialogService)
+        public ShellViewModel(IAccountService accountService, IDialogService dialogService, ICryptoService cryptoService)
         {
             DisplayName = "Candado";
+
             AccountService = accountService;
             DialogService = dialogService;
+            CryptoService = cryptoService;
+
             Accounts = new BindableCollection<AccountViewModel>();
 
             LoadAccounts();
@@ -47,7 +51,7 @@ namespace Candado.Desktop.ViewModels
 
         public void AddAccount()
         {
-            var viewModel = new AccountViewModel(new Account("New Account", "", "", ""));
+            var viewModel = new AccountViewModel(new Account(0, "New Account", "", "", ""));
 
             Accounts.Add(viewModel);
 
@@ -83,7 +87,7 @@ namespace Candado.Desktop.ViewModels
                     return;
                 }
 
-                var duplicate = Accounts.GroupBy(vm => vm.AccountName).Any(grp => grp.Count() > 1);
+                var duplicate = Accounts.GroupBy(vm => vm.Name).Any(grp => grp.Count() > 1);
 
                 if (duplicate)
                 {
@@ -95,6 +99,8 @@ namespace Candado.Desktop.ViewModels
                 var items = Accounts.Select(vm => vm.Model).ToArray();
 
                 AccountService.SaveAll(items);
+
+                LoadAccounts();
             }
             catch (Exception e)
             {
@@ -107,8 +113,8 @@ namespace Candado.Desktop.ViewModels
             if (Account == null) return;
 
             var message = string.IsNullOrEmpty(Account.Password) ?
-                $"No password available for account '{Account.AccountName}'" :
-                $"Password for account '{Account.AccountName}':\n\n{Account.Password}";
+                $"No password available for account '{Account.Name}'" :
+                $"Password for account '{Account.Name}':\n\n{Account.Password}";
 
             DialogService.Notify(message);
         }
@@ -138,7 +144,9 @@ namespace Candado.Desktop.ViewModels
         {
             try
             {
-                var items = AccountService.GetAll().OrderBy(x => x.AccountName);
+                Accounts.Clear();
+
+                var items = AccountService.GetAll().OrderBy(x => x.Name);
 
                 foreach (var item in items)
                 {
