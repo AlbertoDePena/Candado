@@ -1,18 +1,19 @@
 ﻿using Caliburn.Micro;
-using System;
 using Candado.Core;
+using System;
 
 namespace Candado.Desktop.ViewModels
 {
     public class AccountViewModel : PropertyChangedBase
     {
-        private readonly int Id;
+        private const string DefaultName = "New Account";
+        private bool _canEditName;
         private string _description;
         private string _name;
         private string _password;
         private string _userName;
 
-        public AccountViewModel(Account account)
+        public AccountViewModel(Account account, Func<string, string> decrypt)
         {
             if (account == null)
                 throw new ArgumentNullException(nameof(account));
@@ -20,11 +21,17 @@ namespace Candado.Desktop.ViewModels
             if (string.IsNullOrEmpty(account.Name))
                 throw new ArgumentNullException(nameof(account.Name));
 
-            Id = account.Id;
             _name = account.Name;
-            _userName = account.UserName;
-            _password = account.Password;
-            _description = account.Description;
+            _userName = account.Key;
+            _password = String.IsNullOrEmpty(account.Token) ? string.Empty : decrypt(account.Token);
+            _description = account.Desc;
+            _canEditName = false;
+        }
+
+        public AccountViewModel()
+        {
+            _canEditName = true;
+            _name = DefaultName;
         }
 
         public string Description
@@ -36,8 +43,6 @@ namespace Candado.Desktop.ViewModels
                 NotifyOfPropertyChange();
             }
         }
-
-        public Account Model => new Account(Id, Name, UserName, Password, Description);
 
         public string Name
         {
@@ -59,6 +64,8 @@ namespace Candado.Desktop.ViewModels
             }
         }
 
+        public bool ReadOnlyName => !_canEditName;
+
         public string UserName
         {
             get { return _userName; }
@@ -68,6 +75,21 @@ namespace Candado.Desktop.ViewModels
                 NotifyOfPropertyChange();
             }
         }
+
         public bool CanSave() => !string.IsNullOrEmpty(Name);
+
+        public Account ViewModelToModel(Func<string, string> encrypt)
+        {
+            var encryptedPassword = String.IsNullOrEmpty(Password) ? string.Empty : encrypt(Password);
+
+            return new Account(Name, UserName, encryptedPassword, Description);
+        }
+
+        internal void SetReadOnlyName()
+        {
+            _canEditName = false;
+
+            NotifyOfPropertyChange(nameof(ReadOnlyName));
+        }
     }
 }

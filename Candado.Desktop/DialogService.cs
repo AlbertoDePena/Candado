@@ -8,7 +8,7 @@ namespace Candado.Desktop
         private readonly string Title = "Candado";
 
         public bool Confirm(string message)
-            => MessageBox.Show(message, Title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+            => MessageBox.Show(message, Title, MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
 
         public void Error(string message)
             => MessageBox.Show(message, Title, MessageBoxButton.OK, MessageBoxImage.Error);

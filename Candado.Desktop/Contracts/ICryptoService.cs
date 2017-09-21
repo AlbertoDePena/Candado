@@ -2,8 +2,8 @@
 {
     public interface ICryptoService
     {
-        string Decrypt(string encryptedText);
+        string Decrypt(string key, string encryptedText);
 
-        string Encrypt(string plainText);
+        string Encrypt(string key, string plainText);
     }
 }

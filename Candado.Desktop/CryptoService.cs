@@ -1,5 +1,4 @@
-﻿using Candado.Core;
-using Candado.Desktop.Contracts;
+﻿using Candado.Desktop.Contracts;
 using System;
 using System.IO;
 using System.Security.Cryptography;
@@ -9,20 +8,13 @@ namespace Candado.Desktop
 {
     public class CryptoService : ICryptoService
     {
-        private readonly ISecretKeyProvider SecretKeyProvider;
-
-        public CryptoService(ISecretKeyProvider secretKeyProvider)
-        {
-            SecretKeyProvider = secretKeyProvider;
-        }
-
-        public string Decrypt(string encryptedText)
+        public string Decrypt(string key, string encryptedText)
         {
             byte[] array;
 
             using (var stream = new MemoryStream())
             {
-                var des = CreateDES();
+                var des = CreateDES(key);
 
                 var decryptStream = new CryptoStream(stream, des.CreateDecryptor(), CryptoStreamMode.Write);
 
@@ -37,13 +29,13 @@ namespace Candado.Desktop
             return Encoding.Unicode.GetString(array);
         }
 
-        public string Encrypt(string plainText)
+        public string Encrypt(string key, string plainText)
         {
             byte[] array;
 
             using (var stream = new MemoryStream())
             {
-                var des = CreateDES();
+                var des = CreateDES(key);
 
                 var cryptStream = new CryptoStream(stream, des.CreateEncryptor(), CryptoStreamMode.Write);
 
@@ -58,10 +50,8 @@ namespace Candado.Desktop
             return Convert.ToBase64String(array);
         }
 
-        private TripleDES CreateDES()
+        private TripleDES CreateDES(string key)
         {
-            var key = SecretKeyProvider.GetSecretKey();
-
             var md5 = new MD5CryptoServiceProvider();
 
             var des = new TripleDESCryptoServiceProvider()

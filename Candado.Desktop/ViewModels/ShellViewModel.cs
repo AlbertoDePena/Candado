@@ -51,7 +51,7 @@ namespace Candado.Desktop.ViewModels
 
         public void AddAccount()
         {
-            var viewModel = new AccountViewModel(new Account(0, "New Account", "", "", ""));
+            var viewModel = new AccountViewModel();
 
             Accounts.Add(viewModel);
 
@@ -65,13 +65,25 @@ namespace Candado.Desktop.ViewModels
 
         public void DeleteAccount()
         {
-            if (Account == null) return;
+            try
+            {
+                if (Account == null) return;
 
-            if (!DialogService.Confirm("Are you sure you want to delete this account?")) return;
+                if (!DialogService.Confirm("Are you sure you want to delete this account?")) return;
 
-            Accounts.Remove(Account);
+                if (Account.ReadOnlyName)
+                {
+                    AccountService.DeleteAccount(Account.Name);
+                }
+                
+                Accounts.Remove(Account);
 
-            Account = Accounts.FirstOrDefault();
+                Account = Accounts.FirstOrDefault();
+            }
+            catch (Exception e)
+            {
+                DialogService.Error(e.Message);
+            }
         }
 
         public void SaveChanges()
@@ -96,11 +108,14 @@ namespace Candado.Desktop.ViewModels
                     return;
                 }
 
-                var items = Accounts.Select(vm => vm.Model).ToArray();
+                Func<string, string> encrypt = text => CryptoService.Encrypt(AccountService.GetSecretKey(), text);
+                
+                foreach (var vm in Accounts)
+                {
+                    AccountService.SaveAccount(vm.ViewModelToModel(encrypt));
 
-                AccountService.SaveAll(items);
-
-                LoadAccounts();
+                    vm.SetReadOnlyName();
+                }
             }
             catch (Exception e)
             {
@@ -146,11 +161,13 @@ namespace Candado.Desktop.ViewModels
             {
                 Accounts.Clear();
 
-                var items = AccountService.GetAll().OrderBy(x => x.Name);
+                var items = AccountService.GetAccounts().OrderBy(x => x.Name);
+
+                Func<string, string> dencrypt = text => CryptoService.Decrypt(AccountService.GetSecretKey(), text);
 
                 foreach (var item in items)
                 {
-                    Accounts.Add(new AccountViewModel(item));
+                    Accounts.Add(new AccountViewModel(item, dencrypt));
                 }
             }
             catch (Exception e)

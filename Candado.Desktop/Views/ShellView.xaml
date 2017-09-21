@@ -67,7 +67,8 @@
             
             <DockPanel Grid.Row="0" Grid.Column="2" ToolTip="Account Name">
                 <Image Source="../Images/account.png" />
-                <TextBox Text="{Binding Account.Name, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Text="{Binding Account.Name, UpdateSourceTrigger=PropertyChanged}" 
+                         IsReadOnly="{Binding Account.ReadOnlyName, UpdateSourceTrigger=PropertyChanged}" />
             </DockPanel>
 
             <DockPanel Grid.Row="1" Grid.Column="2" ToolTip="User Name / Email">

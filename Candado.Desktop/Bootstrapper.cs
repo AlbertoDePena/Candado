@@ -25,7 +25,6 @@ namespace Candado.Desktop
             container = new SimpleContainer()
                             .Singleton<IWindowManager, CustomWindowManager>()
                             .Singleton<IDialogService, DialogService>()
-                            .Singleton<ISecretKeyProvider, SecretKeyProvider>()
                             .Singleton<IAccountService, AccountService>()
                             .Singleton<ICryptoService, CryptoService>()
                             .PerRequest<IShell, ShellViewModel>();
