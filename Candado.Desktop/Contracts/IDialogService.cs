@@ -1,4 +1,6 @@
-﻿namespace Candado.Desktop.Contracts
+﻿using System;
+
+namespace Candado.Desktop.Contracts
 {
     public interface IDialogService
     {
@@ -7,5 +9,7 @@
         void Error(string message);
 
         void Notify(string message);
+
+        void Exception(Exception e);
     }
 }

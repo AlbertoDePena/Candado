@@ -16,3 +16,6 @@ module Extensions =
             if isNull this.InnerException then
                 this.Message 
             else this.InnerException.ToInnerMessage()
+
+    let GetInnerMessage (e: System.Exception) =
+        e.ToInnerMessage()

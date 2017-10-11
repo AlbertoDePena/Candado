@@ -1,5 +1,7 @@
 ﻿using Candado.Desktop.Contracts;
 using System.Windows;
+using System;
+using Candado.Core;
 
 namespace Candado.Desktop
 {
@@ -12,6 +14,9 @@ namespace Candado.Desktop
 
         public void Error(string message)
             => MessageBox.Show(message, Title, MessageBoxButton.OK, MessageBoxImage.Error);
+
+        public void Exception(Exception e) 
+            => Error(Extensions.GetInnerMessage(e));
 
         public void Notify(string message)
             => MessageBox.Show(message, Title, MessageBoxButton.OK, MessageBoxImage.Information);

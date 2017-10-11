@@ -103,7 +103,7 @@ namespace Candado.Desktop.ViewModels
             }
             catch (Exception e)
             {
-                DialogService.Error(e.Message);
+                DialogService.Exception(e);
             }
         }
 
@@ -140,7 +140,7 @@ namespace Candado.Desktop.ViewModels
             }
             catch (Exception e)
             {
-                DialogService.Error(e.Message);
+                DialogService.Exception(e);
             }
         }
 
@@ -207,7 +207,7 @@ namespace Candado.Desktop.ViewModels
             }
             catch (Exception e)
             {
-                DialogService.Error(e.Message);
+                DialogService.Exception(e);
             }
         }
 
