@@ -49,10 +49,14 @@
                 <RowDefinition Height="40" />
                 <RowDefinition Height="40" />
                 <RowDefinition Height="40" />
+                <RowDefinition Height="40" />
                 <RowDefinition />
             </Grid.RowDefinitions>
 
-            <ListBox Grid.Row="0" Grid.RowSpan="4" Grid.Column="0" 
+            <TextBox Grid.Row="0" Grid.Column="0" 
+                     Text="{Binding Filter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <ListBox Grid.Row="1" Grid.RowSpan="4" Grid.Column="0" 
                      ItemsSource="{Binding Accounts}" SelectedItem="{Binding Account}"
                      cal:Message.Attach="[Event MouseDoubleClick] = [Action ViewAccount()]">
                 <ListBox.ItemTemplate>
@@ -62,7 +66,7 @@
                 </ListBox.ItemTemplate>
             </ListBox>
 
-            <GridSplitter Grid.Row="0" Grid.RowSpan="4" Grid.Column="1" />
+            <GridSplitter Grid.Row="0" Grid.RowSpan="5" Grid.Column="1" />
 
             <DockPanel Grid.Row="0" Grid.Column="2" ToolTip="Account Name">
                 <Image Source="../Images/account.png" />
@@ -80,7 +84,7 @@
                 <PasswordBox x:Name="PasswordBoxControl" />
             </DockPanel>
 
-            <ScrollViewer Grid.Row="3" Grid.Column="2" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <ScrollViewer Grid.Row="3" Grid.Column="2" Grid.RowSpan="2" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                 <TextBox Style="{StaticResource MultiLine}" ToolTip="Description"
                      Text="{Binding Account.Description, UpdateSourceTrigger=PropertyChanged}" />
             </ScrollViewer>

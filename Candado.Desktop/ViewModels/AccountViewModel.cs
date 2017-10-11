@@ -28,8 +28,8 @@ namespace Candado.Desktop.ViewModels
 
         public AccountViewModel()
         {
-            CanEditName = true;
             _name = "New Account";
+            CanEditName = true;
         }
 
         public bool CanEditName { get; private set; }

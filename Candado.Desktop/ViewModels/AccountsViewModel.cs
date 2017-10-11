@@ -2,9 +2,11 @@
 using Candado.Core;
 using Candado.Desktop.Contracts;
 using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace Candado.Desktop.ViewModels
 {
@@ -15,6 +17,7 @@ namespace Candado.Desktop.ViewModels
         private readonly ICryptoService CryptoService;
         private readonly IDialogService DialogService;
         private AccountViewModel _account;
+        private string _filter;
 
         public AccountsViewModel(IAccountService accountService, IDialogService dialogService, ICryptoService cryptoService)
         {
@@ -22,7 +25,12 @@ namespace Candado.Desktop.ViewModels
             DialogService = dialogService;
             CryptoService = cryptoService;
 
-            Accounts = new BindableCollection<AccountViewModel>();
+            AccountViewModels = new BindableCollection<AccountViewModel>();
+            AccountViewSource = new CollectionViewSource
+            {
+                Source = AccountViewModels
+            };
+            AccountViewSource.Filter += AccountViewSource_Filter;
 
             LoadAccounts();
         }
@@ -43,7 +51,22 @@ namespace Candado.Desktop.ViewModels
             }
         }
 
-        public BindableCollection<AccountViewModel> Accounts { get; }
+        public ICollectionView Accounts => AccountViewSource.View;
+
+        public string Filter
+        {
+            get { return _filter; }
+            set
+            {
+                _filter = value;
+                AccountViewSource.View.Refresh();
+                NotifyOfPropertyChange();
+            }
+        }
+
+        internal BindableCollection<AccountViewModel> AccountViewModels { get; }
+
+        internal CollectionViewSource AccountViewSource { get; set; }
 
         private PasswordBox PasswordBox { get; set; }
 
@@ -51,7 +74,7 @@ namespace Candado.Desktop.ViewModels
         {
             var viewModel = new AccountViewModel();
 
-            Accounts.Add(viewModel);
+            AccountViewModels.Add(viewModel);
 
             Account = viewModel;
         }
@@ -74,9 +97,9 @@ namespace Candado.Desktop.ViewModels
                     AccountService.DeleteAccount(Account.Name);
                 }
 
-                Accounts.Remove(Account);
+                AccountViewModels.Remove(Account);
 
-                Account = Accounts.FirstOrDefault();
+                Account = AccountViewModels.FirstOrDefault();
             }
             catch (Exception e)
             {
@@ -88,7 +111,7 @@ namespace Candado.Desktop.ViewModels
         {
             try
             {
-                var canSave = Accounts.All(vm => vm.CanSave());
+                var canSave = AccountViewModels.All(vm => vm.CanSave());
 
                 if (!canSave)
                 {
@@ -97,7 +120,7 @@ namespace Candado.Desktop.ViewModels
                     return;
                 }
 
-                var duplicate = Accounts.GroupBy(vm => vm.Name).Any(grp => grp.Count() > 1);
+                var duplicate = AccountViewModels.GroupBy(vm => vm.Name).Any(grp => grp.Count() > 1);
 
                 if (duplicate)
                 {
@@ -108,7 +131,7 @@ namespace Candado.Desktop.ViewModels
 
                 Func<string, string> encrypt = text => CryptoService.Encrypt(AccountService.GetSecretKey(), text);
 
-                foreach (var vm in Accounts)
+                foreach (var vm in AccountViewModels)
                 {
                     AccountService.SaveAccount(vm.ViewModelToModel(encrypt));
 
@@ -153,11 +176,25 @@ namespace Candado.Desktop.ViewModels
             PasswordBox.PasswordChanged += PasswordBox_PasswordChanged;
         }
 
+        private void AccountViewSource_Filter(object sender, FilterEventArgs e)
+        {
+            var vm = e.Item as AccountViewModel;
+
+            if (String.IsNullOrEmpty(Filter) || Filter.Length == 0 || vm.Name.Length == 0)
+            {
+                e.Accepted = true;
+
+                return;
+            }
+
+            e.Accepted = vm.Name.ToLower().Contains(Filter.ToLower());
+        }
+
         private void LoadAccounts()
         {
             try
             {
-                Accounts.Clear();
+                AccountViewModels.Clear();
 
                 var items = AccountService.GetAccounts().OrderBy(x => x.Name);
 
@@ -165,7 +202,7 @@ namespace Candado.Desktop.ViewModels
 
                 foreach (var item in items)
                 {
-                    Accounts.Add(new AccountViewModel(item, dencrypt));
+                    AccountViewModels.Add(new AccountViewModel(item, dencrypt));
                 }
             }
             catch (Exception e)
