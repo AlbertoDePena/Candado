@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.14
+VisualStudioVersion = 15.0.27004.2002
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Candado.Desktop", "Candado.Desktop\Candado.Desktop.csproj", "{8A843F03-619E-4151-B94D-AF19CF65E485}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Candado.Core", "Candado.Core\Candado.Core.fsproj", "{A869E2B3-7B31-4A56-B942-6234482D2648}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Candado.Util", "Candado.Util\Candado.Util.fsproj", "{0EDD652A-B2F4-4B0C-A5E6-2645B8257F55}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,8 +23,15 @@ Global
 		{A869E2B3-7B31-4A56-B942-6234482D2648}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A869E2B3-7B31-4A56-B942-6234482D2648}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A869E2B3-7B31-4A56-B942-6234482D2648}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0EDD652A-B2F4-4B0C-A5E6-2645B8257F55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EDD652A-B2F4-4B0C-A5E6-2645B8257F55}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EDD652A-B2F4-4B0C-A5E6-2645B8257F55}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EDD652A-B2F4-4B0C-A5E6-2645B8257F55}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {43612DAA-6041-4BA5-B075-8FAA973360C7}
 	EndGlobalSection
 EndGlobal

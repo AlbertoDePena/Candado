@@ -6,8 +6,6 @@ namespace Candado.Desktop.ViewModels
 {
     public class AccountViewModel : PropertyChangedBase
     {
-        private const string DefaultName = "New Account";
-        private bool _canEditName;
         private string _description;
         private string _name;
         private string _password;
@@ -25,14 +23,16 @@ namespace Candado.Desktop.ViewModels
             _userName = account.Key;
             _password = String.IsNullOrEmpty(account.Token) ? string.Empty : decrypt(account.Token);
             _description = account.Desc;
-            _canEditName = false;
+            CanEditName = false;
         }
 
         public AccountViewModel()
         {
-            _canEditName = true;
-            _name = DefaultName;
+            CanEditName = true;
+            _name = "New Account";
         }
+
+        public bool CanEditName { get; private set; }
 
         public string Description
         {
@@ -43,6 +43,8 @@ namespace Candado.Desktop.ViewModels
                 NotifyOfPropertyChange();
             }
         }
+
+        public bool IsReadOnlyName => !CanEditName;
 
         public string Name
         {
@@ -63,8 +65,6 @@ namespace Candado.Desktop.ViewModels
                 NotifyOfPropertyChange();
             }
         }
-
-        public bool ReadOnlyName => !_canEditName;
 
         public string UserName
         {
@@ -87,9 +87,9 @@ namespace Candado.Desktop.ViewModels
 
         internal void SetReadOnlyName()
         {
-            _canEditName = false;
+            CanEditName = false;
 
-            NotifyOfPropertyChange(nameof(ReadOnlyName));
+            NotifyOfPropertyChange(nameof(IsReadOnlyName));
         }
     }
 }

@@ -23,6 +23,7 @@ namespace Candado.Desktop
         protected override void Configure()
         {
             container = new SimpleContainer()
+                            .Singleton<IEventAggregator, EventAggregator>()
                             .Singleton<IWindowManager, CustomWindowManager>()
                             .Singleton<IDialogService, DialogService>()
                             .Singleton<IAccountService, AccountService>()

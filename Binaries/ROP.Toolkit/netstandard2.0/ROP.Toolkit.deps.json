@@ -1,22 +1,22 @@
 {
   "runtimeTarget": {
     "name": ".NETStandard,Version=v2.0/",
-    "signature": "303a036e6fcf251e72a8d06adbf1450da27c16c9"
+    "signature": "6c3ebb4d8d65ccf56aef041f6ecc7e252fe500a3"
   },
   "compilationOptions": {},
   "targets": {
     ".NETStandard,Version=v2.0": {},
     ".NETStandard,Version=v2.0/": {
-      "ROP.Micro/1.0.0.2": {
+      "ROP.Toolkit/1.0.0.0": {
         "dependencies": {
-          "FSharp.Core": "4.1.18",
+          "FSharp.Core": "4.2.3",
           "NETStandard.Library": "2.0.0"
         },
         "runtime": {
-          "ROP.Micro.dll": {}
+          "ROP.Toolkit.dll": {}
         }
       },
-      "FSharp.Core/4.1.18": {
+      "FSharp.Core/4.2.3": {
         "dependencies": {
           "System.Collections": "4.0.11",
           "System.Console": "4.0.0",
@@ -642,17 +642,17 @@
     }
   },
   "libraries": {
-    "ROP.Micro/1.0.0.2": {
+    "ROP.Toolkit/1.0.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
     },
-    "FSharp.Core/4.1.18": {
+    "FSharp.Core/4.2.3": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-LxCp5pMcNbqoIWAaE76/rqJp/2/O6rrmIvnWXoxx5NDiIOV7X4NcLYC1RdImReroq2m/AUAa1RrvraBEWrMOmQ==",
-      "path": "fsharp.core/4.1.18",
-      "hashPath": "fsharp.core.4.1.18.nupkg.sha512"
+      "sha512": "sha512-PthzJd0cY9L7+mPHoMB0B9Z9moR4oO1rU5RDrVW44cfMm0R9AYFf+F3BsuTvP9clr9w/Wa0wbSfEwbJV8sV80A==",
+      "path": "fsharp.core/4.2.3",
+      "hashPath": "fsharp.core.4.2.3.nupkg.sha512"
     },
     "Microsoft.NETCore.Platforms/1.1.0": {
       "type": "package",
