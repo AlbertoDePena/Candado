@@ -4,18 +4,25 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:cal="http://www.caliburnproject.org"
+             xmlns:local="clr-namespace:Candado.Desktop"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
+    <UserControl.Resources>
+        <local:VisibilityValueConverter x:Key="VisibilityConverter" />
+    </UserControl.Resources>
+    
     <DockPanel>
         <ToolBar DockPanel.Dock="Top">
             <Button Style="{StaticResource ToolBarButton}" ToolTip="Save all accounts" 
+                    Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}"
                     cal:Message.Attach="SaveChanges">
                 <StackPanel Orientation="Horizontal">
                     <Image Source="../Images/save.png" />
                 </StackPanel>
             </Button>
 
-            <Button Style="{StaticResource ToolBarButton}" ToolTip="Add a new account" 
+            <Button Style="{StaticResource ToolBarButton}" ToolTip="Add a new account"
+                    Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}"
                     cal:Message.Attach="AddAccount">
                 <StackPanel Orientation="Horizontal">
                     <Image Source="../Images/add.png" />
@@ -23,13 +30,14 @@
             </Button>
 
             <Button Style="{StaticResource ToolBarButton}" ToolTip="Delete the selected account" 
+                    Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}"
                     cal:Message.Attach="DeleteAccount">
                 <StackPanel Orientation="Horizontal">
                     <Image Source="../Images/delete.png" />
                 </StackPanel>
             </Button>
 
-            <Separator Margin="0,5" />
+            <Separator Margin="0,5" Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}" />
 
             <Button Style="{StaticResource ToolBarButton}" ToolTip="View the selected account's password" 
                     cal:Message.Attach="ViewAccount">
@@ -39,6 +47,10 @@
             </Button>
         </ToolBar>
 
+        <StatusBar DockPanel.Dock="Bottom">
+            <Label Content="{Binding Status, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </StatusBar>
+        
         <Grid DockPanel.Dock="Bottom">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition />

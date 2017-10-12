@@ -4,10 +4,10 @@ type Account =
     {
         Name: string; 
         Key: string; 
-        Token: string; 
+        Psw: string; 
         Desc: string; 
     }
-
+    
 [<AutoOpen>]
 module Extensions =
 

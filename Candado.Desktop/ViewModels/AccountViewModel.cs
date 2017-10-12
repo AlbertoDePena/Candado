@@ -21,7 +21,7 @@ namespace Candado.Desktop.ViewModels
 
             _name = account.Name;
             _userName = account.Key;
-            _password = String.IsNullOrEmpty(account.Token) ? string.Empty : decrypt(account.Token);
+            _password = String.IsNullOrEmpty(account.Psw) ? string.Empty : decrypt(account.Psw);
             _description = account.Desc;
             CanEditName = false;
         }

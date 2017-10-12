@@ -31,16 +31,15 @@ let main argv =
         let parsedArgs = parseCmdLine args argsSoFar
         
         let init args =
-            let service = AccountService() :> IAccountService
-            service.Init args.SecretKey args.MasterPsw
+            RegistryHelper.Init args.SecretKey args.MasterPsw
             
         let execute =
             validateArgs
             >=> Rop.switch init
-            >> Rop.valueOrDefault (fun x -> printf "%s" x)
+            >> Rop.valueOrDefault (fun x -> printfn "%s" x)
         
         execute parsedArgs
-        printf "Registry has been updated!"
+        printfn "Registry has been updated!"
     with
         ex -> printfn "%s" <| ex.ToInnerMessage()
     0 //! return an integer exit code

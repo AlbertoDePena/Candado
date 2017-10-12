@@ -1,24 +1,15 @@
 ﻿namespace Candado.Core
 
 open System
+open System.IO
+open System.Text
+open System.Security.Cryptography
 open Microsoft.Win32
 open ROP.Toolkit
 open ROP.Toolkit.Operators
 
-type IAccountService =
-    abstract member GetSecretKey : unit -> string;
-
-    abstract member GetAccounts : unit -> Account [];
-
-    abstract member SaveAccount : Account -> unit;
-
-    abstract member DeleteAccount : string -> unit;
-
-    abstract member Init : string -> string -> unit;
-
-    abstract member Authenticate : string -> bool;
-
-type AccountService() =
+[<AutoOpen>]
+module private Common =
 
     [<Literal>]
     let CandadoField = "Software\Candado"
@@ -28,13 +19,130 @@ type AccountService() =
 
     [<Literal>]
     let MasterPswField = "MasterPsw"
-    
+
     let getRootRegistry () =
         let registry = Registry.CurrentUser.OpenSubKey(CandadoField, true)
         if isNull registry then
             failwith <| sprintf "Registry '%s' not found" CandadoField
         else registry
-        
+
+module RegistryHelper =
+
+    let Init secretKey masterPsw =
+        let validateArgs root =
+                if String.IsNullOrEmpty(secretKey) then
+                    Rop.fail "Secret key is required"
+                elif String.IsNullOrEmpty(masterPsw) then
+                    Rop.fail "Master password is required"
+                else Rop.succeed root
+
+        let getCandadoRegistry () =
+            let registry = Registry.CurrentUser.OpenSubKey(CandadoField, true)
+            if isNull registry then
+                Registry.CurrentUser.CreateSubKey(CandadoField)
+            else registry
+            
+        let setSecretKeyRegistry (root: RegistryKey) =
+            let value = root.GetValue(SecretKeyField) :?> string
+            if not <| String.IsNullOrEmpty(value) then
+                printfn "Secret key has already been set"
+            else root.SetValue(SecretKeyField, secretKey)
+               
+            Rop.succeed root
+
+        let setMasterPswRegistry (root: RegistryKey) =
+            let value = root.GetValue(MasterPswField) :?> string
+            if not <| String.IsNullOrEmpty(value) then
+                printfn "Master password has already been set"
+            else root.SetValue(MasterPswField, masterPsw)
+                    
+            Rop.succeed root
+            
+        let execute =
+            validateArgs
+            >=> setSecretKeyRegistry
+            >=> setMasterPswRegistry
+            >> Rop.valueOrDefault (fun ex -> failwith ex)
+            
+        let registry = getCandadoRegistry()
+
+        registry |> execute |> ignore
+
+        registry.Close()
+
+type ICryptoService =
+    abstract member Decrypt : string -> string -> string
+    abstract member Encrypt : string -> string -> string
+
+type CryptoService() =
+
+    let createDes (key: string) =
+        use md5   = new MD5CryptoServiceProvider()
+        let des   = new TripleDESCryptoServiceProvider()
+        let bytes = Encoding.Unicode.GetBytes(key)
+
+        des.Key <- md5.ComputeHash(bytes)
+        des.IV  <- Array.zeroCreate (des.BlockSize / 8)
+        des
+
+    interface ICryptoService with
+
+        member __.Decrypt key text =
+            use stream       = new MemoryStream()
+            let des          = createDes key
+            use cryptoStream = new CryptoStream(stream, des.CreateDecryptor(), CryptoStreamMode.Write)
+            let bytes        = Convert.FromBase64String(text)
+
+            cryptoStream.Write(bytes, 0, bytes.Length)
+            cryptoStream.FlushFinalBlock()
+
+            let array = stream.ToArray()
+
+            Encoding.Unicode.GetString(array)
+
+        member __.Encrypt key text =
+            use stream       = new MemoryStream()
+            let des          = createDes key
+            use cryptoStream = new CryptoStream(stream, des.CreateEncryptor(), CryptoStreamMode.Write)
+            let bytes        = Encoding.Unicode.GetBytes(text)
+
+            cryptoStream.Write(bytes, 0, bytes.Length)
+            cryptoStream.FlushFinalBlock()
+
+            let array = stream.ToArray()
+
+            Convert.ToBase64String(array)
+
+type ISecretKeyProvider =
+    abstract member GetSecretKey : unit -> string;
+
+type SecretKeyProvider() =
+
+    interface ISecretKeyProvider with
+
+        member __.GetSecretKey () =
+            let registry = getRootRegistry()
+            let value    = registry.GetValue(SecretKeyField)
+
+            registry.Close()
+
+            if isNull value then 
+                failwith <| sprintf "%s value not found" SecretKeyField
+
+            downcast value : string
+
+type IAccountService =
+
+    abstract member GetAll : unit -> Account [];
+
+    abstract member Upsert : Account -> unit;
+
+    abstract member Delete : string -> unit;
+    
+    abstract member Authenticate : string -> bool;
+
+type AccountService() =
+     
     interface IAccountService with
 
         member __.Authenticate masterPsw =
@@ -42,55 +150,12 @@ type AccountService() =
             let value    = registry.GetValue(MasterPswField) :?> string
 
             not <| String.IsNullOrEmpty(value) && value = masterPsw
-
-        member __.Init (secretKey: string) (masterPsw: string) =
-            let validateArgs (secretKey, masterPsw) =
-                if String.IsNullOrEmpty(secretKey) then
-                    Rop.fail "Secret key is required"
-                elif String.IsNullOrEmpty(masterPsw) then
-                    Rop.fail "Master password is required"
-                else Rop.succeed (secretKey, masterPsw)
-
-            let getCandadoRegistry () =
-                let registry = Registry.CurrentUser.OpenSubKey(CandadoField, true)
-                if isNull registry then
-                    Registry.CurrentUser.CreateSubKey(CandadoField)
-                else registry
-            
-            let setSecretKeyRegistry (root: RegistryKey) (secretKey, masterPsw) =
-                let value = root.GetValue(SecretKeyField) :?> string
-                if not <| String.IsNullOrEmpty(value) then
-                    printfn "Secret key has already been set"
-                else root.SetValue(SecretKeyField, secretKey)
-               
-                Rop.succeed (secretKey, masterPsw)
-
-            let setMasterPswRegistry (root: RegistryKey) (secretKey, masterPsw) =
-                let value = root.GetValue(MasterPswField) :?> string
-                if not <| String.IsNullOrEmpty(value) then
-                    printfn "Master password has already been set"
-                else root.SetValue(MasterPswField, masterPsw)
-                    
-                Rop.succeed (secretKey, masterPsw)
-            
-            let registry = getCandadoRegistry()
-
-            let execute =
-                validateArgs
-                >=> setSecretKeyRegistry registry
-                >=> setMasterPswRegistry registry
-                >> Rop.valueOrDefault (fun ex -> failwith ex)
-            
-            execute (secretKey, masterPsw) |> ignore
-
-            registry.Close()
-            
-        member __.GetAccounts () =
+ 
+        member __.GetAll () =
             let registry = getRootRegistry()
 
             let getValue (registry: RegistryKey) name =
                 let value = registry.GetValue(name)
-
                 if isNull value then 
                     String.Empty 
                 else value.ToString()
@@ -98,10 +163,10 @@ type AccountService() =
             let toAccount (name: string) =
                 let childRegistry = registry.OpenSubKey(name)
                 
-                { Name  = name; 
-                  Key   = getValue childRegistry "Key";
-                  Token = getValue childRegistry "Token";
-                  Desc  = getValue childRegistry "Desc"; }
+                { Name = name; 
+                  Key  = getValue childRegistry "Key";
+                  Psw  = getValue childRegistry "Psw";
+                  Desc = getValue childRegistry "Desc"; }
                
               
             let accounts = 
@@ -111,27 +176,14 @@ type AccountService() =
             registry.Close() 
 
             accounts
-
-        member __.GetSecretKey () =
-            let registry = getRootRegistry()
-
-            let value = registry.GetValue(SecretKeyField)
-
-            registry.Close()
-
-            if isNull value then 
-                failwith <| sprintf "%s value not found" SecretKeyField
-
-            value.ToString()
-                
-
-        member __.DeleteAccount name =
+            
+        member __.Delete name =
             let registry = getRootRegistry()
 
             registry.DeleteSubKeyTree(name)
             registry.Close()
 
-        member __.SaveAccount account =
+        member __.Upsert account =
             let upsert account =
 
                 let delete (registry: RegistryKey) key =
@@ -144,9 +196,9 @@ type AccountService() =
                         delete registry "Key"
                     else registry.SetValue("Key", account.Key)
 
-                    if String.IsNullOrEmpty(account.Token) then
-                        delete registry "Token"
-                    else registry.SetValue("Token", account.Token)
+                    if String.IsNullOrEmpty(account.Psw) then
+                        delete registry "Psw"
+                    else registry.SetValue("Psw", account.Psw)
 
                     if String.IsNullOrEmpty(account.Desc) then
                         delete registry "Desc"
@@ -184,14 +236,14 @@ type AccountService() =
                         Rop.fail <| tooLong "Key"
                     else Rop.succeed account
 
-                let validateToken account =
-                    if String.IsNullOrEmpty(account.Token) then
-                        Rop.succeed { account with Token = "" }
-                    elif invalidLength account.Token then
-                        Rop.fail <| tooLong "Token"
+                let validatePsw account =
+                    if String.IsNullOrEmpty(account.Psw) then
+                        Rop.succeed { account with Psw = "" }
+                    elif invalidLength account.Psw then
+                        Rop.fail <| tooLong "Psw"
                     else Rop.succeed account
 
-                let validateDescription account =
+                let validateDesc account =
                     if String.IsNullOrEmpty(account.Desc) then
                         Rop.succeed { account with Desc = "" }
                     elif invalidLength account.Desc then
@@ -201,8 +253,8 @@ type AccountService() =
                 let validateAccount =
                     validateName 
                     >=> validateKey 
-                    >=> validateToken 
-                    >=> validateDescription
+                    >=> validatePsw 
+                    >=> validateDesc
 
                 match validateAccount account with
                 | Failure f -> Rop.fail f

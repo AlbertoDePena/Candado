@@ -27,6 +27,7 @@ namespace Candado.Desktop
                             .Singleton<IWindowManager, CustomWindowManager>()
                             .Singleton<IDialogService, DialogService>()
                             .Singleton<IAccountService, AccountService>()
+                            .Singleton<ISecretKeyProvider, SecretKeyProvider>()
                             .Singleton<ICryptoService, CryptoService>()
                             .PerRequest<IShell, ShellViewModel>();
         }

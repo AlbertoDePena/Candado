@@ -84,5 +84,13 @@ namespace Candado.Desktop.ViewModels
         {
             Password = PasswordBox.Password;
         }
+
+        protected override void OnDeactivate(bool close)
+        {
+            PasswordBox.PasswordChanged -= PasswordBox_PasswordChanged;
+            PasswordBox = null;
+
+            base.OnDeactivate(close);
+        }
     }
 }

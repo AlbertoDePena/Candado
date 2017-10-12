@@ -11,8 +11,12 @@ namespace Candado.Desktop.ViewModels
         private readonly ICryptoService CryptoService;
         private readonly IDialogService DialogService;
         private readonly IEventAggregator EventAggregator;
+        private readonly ISecretKeyProvider SecretKeyProvider;
 
-        public ShellViewModel(IAccountService accountService, IDialogService dialogService, ICryptoService cryptoService, IEventAggregator eventAggregator)
+        public ShellViewModel(
+            IAccountService accountService, IDialogService dialogService, 
+            ICryptoService cryptoService, IEventAggregator eventAggregator, 
+            ISecretKeyProvider secretKeyProvider)
         {
             DisplayName = "Candado";
 
@@ -20,6 +24,7 @@ namespace Candado.Desktop.ViewModels
             DialogService = dialogService;
             CryptoService = cryptoService;
             EventAggregator = eventAggregator;
+            SecretKeyProvider = secretKeyProvider;
 
             EventAggregator.Subscribe(this);
 
@@ -28,16 +33,23 @@ namespace Candado.Desktop.ViewModels
 
         public void Handle(LoginEvent message)
         {
-            var vm = new AccountsViewModel(AccountService, DialogService, CryptoService);
+            var viewModel = new AccountsViewModel(AccountService, DialogService, CryptoService, SecretKeyProvider);
 
-            ActivateItem(vm);
+            ActivateItem(viewModel);
+        }
+
+        protected override void OnDeactivate(bool close)
+        {
+            EventAggregator.Unsubscribe(this);
+
+            base.OnDeactivate(close);
         }
 
         private void DisplayLoginView()
         {
-            var vm = new LoginViewModel(EventAggregator, AccountService, DialogService);
+            var viewModel = new LoginViewModel(EventAggregator, AccountService, DialogService);
 
-            ActivateItem(vm);
+            ActivateItem(viewModel);
         }
     }
 }

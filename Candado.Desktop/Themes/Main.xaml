@@ -49,6 +49,10 @@
         <Setter Property="VerticalAlignment" Value="Top" />
     </Style>
 
+    <Style TargetType="StatusBar">
+        <Setter Property="Height" Value="50" />
+    </Style>
+
     <Style TargetType="Image">
         <Setter Property="Height" Value="25" />
         <Setter Property="Width" Value="25"></Setter>

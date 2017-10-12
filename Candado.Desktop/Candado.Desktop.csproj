@@ -80,10 +80,8 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Contracts\ICryptoService.cs" />
     <Compile Include="Contracts\IDialogService.cs" />
     <Compile Include="Contracts\IView.cs" />
-    <Compile Include="CryptoService.cs" />
     <Compile Include="CustomWindowManager.cs" />
     <Compile Include="DialogService.cs" />
     <Compile Include="Events\LoginEvent.cs" />
@@ -100,6 +98,7 @@
     <Compile Include="Views\ShellView.xaml.cs">
       <DependentUpon>ShellView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="VisibilityValueConverter.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bootstrapper.cs" />
