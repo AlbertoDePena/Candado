@@ -80,9 +80,9 @@ namespace Candado.Desktop.ViewModels
 
         public Account ViewModelToModel(Func<string, string> encrypt)
         {
-            var encryptedPassword = String.IsNullOrEmpty(Password) ? string.Empty : encrypt(Password);
+            var password = String.IsNullOrEmpty(Password) ? string.Empty : encrypt(Password);
 
-            return new Account(Name, UserName, encryptedPassword, Description);
+            return new Account(Name, UserName, password, Description);
         }
 
         internal void SetReadOnlyName()

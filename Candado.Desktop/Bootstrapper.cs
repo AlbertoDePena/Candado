@@ -5,6 +5,7 @@ using Candado.Desktop.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace Candado.Desktop
 {
@@ -40,5 +41,12 @@ namespace Candado.Desktop
 
         protected override void OnStartup(object sender, StartupEventArgs e)
             => DisplayRootViewFor<IShell>();
+
+        protected override void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+        {
+            e.Handled = true;
+
+            MessageBox.Show(Extensions.GetInnerMessage(e.Exception), "An error as occurred", MessageBoxButton.OK);
+        }
     }
 }

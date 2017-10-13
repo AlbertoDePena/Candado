@@ -31,8 +31,8 @@ namespace Candado.Desktop.ViewModels
             set
             {
                 _password = value;
-                NotifyOfPropertyChange(() => Password);
-                NotifyOfPropertyChange(() => CanLogin);
+                NotifyOfPropertyChange();
+                NotifyOfPropertyChange(nameof(CanLogin));
             }
         }
 
