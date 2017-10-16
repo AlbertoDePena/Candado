@@ -6,8 +6,8 @@ namespace Candado.Desktop.ViewModels
 {
     public class AccountViewModel : PropertyChangedBase
     {
+        private string _accountName;
         private string _description;
-        private string _name;
         private string _password;
         private string _userName;
 
@@ -19,7 +19,7 @@ namespace Candado.Desktop.ViewModels
             if (string.IsNullOrEmpty(account.Name))
                 throw new ArgumentNullException(nameof(account.Name));
 
-            _name = account.Name;
+            _accountName = account.Name;
             _userName = account.Key;
             _password = String.IsNullOrEmpty(account.Psw) ? string.Empty : decrypt(account.Psw);
             _description = account.Desc;
@@ -28,8 +28,18 @@ namespace Candado.Desktop.ViewModels
 
         public AccountViewModel()
         {
-            _name = "New Account";
+            _accountName = "New Account";
             CanEditName = true;
+        }
+
+        public string AccountName
+        {
+            get { return _accountName; }
+            set
+            {
+                _accountName = value;
+                NotifyOfPropertyChange();
+            }
         }
 
         public bool CanEditName { get; private set; }
@@ -45,16 +55,6 @@ namespace Candado.Desktop.ViewModels
         }
 
         public bool IsReadOnlyName => !CanEditName;
-
-        public string Name
-        {
-            get { return _name; }
-            set
-            {
-                _name = value;
-                NotifyOfPropertyChange();
-            }
-        }
 
         public string Password
         {
@@ -76,13 +76,13 @@ namespace Candado.Desktop.ViewModels
             }
         }
 
-        public bool CanSave() => !string.IsNullOrEmpty(Name);
+        public bool CanSave() => !string.IsNullOrEmpty(AccountName);
 
         public Account ViewModelToModel(Func<string, string> encrypt)
         {
             var password = String.IsNullOrEmpty(Password) ? string.Empty : encrypt(Password);
 
-            return new Account(Name, UserName, password, Description);
+            return new Account(AccountName, UserName, password, Description);
         }
 
         internal void SetReadOnlyName()

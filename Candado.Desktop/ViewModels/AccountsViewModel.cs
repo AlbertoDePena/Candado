@@ -4,8 +4,6 @@ using Candado.Desktop.Contracts;
 using System;
 using System.ComponentModel;
 using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Data;
 
 namespace Candado.Desktop.ViewModels
@@ -13,7 +11,6 @@ namespace Candado.Desktop.ViewModels
     public class AccountsViewModel : Screen, IView
     {
         private const string CommandLineFlag = "-EditMode";
-        private const string PasswordBoxControl = "PasswordBoxControl";
         private readonly IAccountService AccountService;
         private readonly ICryptoService CryptoService;
         private readonly IDialogService DialogService;
@@ -46,12 +43,6 @@ namespace Candado.Desktop.ViewModels
             set
             {
                 _account = value;
-
-                if (value != null && PasswordBox != null)
-                {
-                    PasswordBox.Password = value.Password;
-                }
-
                 NotifyOfPropertyChange();
             }
         }
@@ -84,8 +75,6 @@ namespace Candado.Desktop.ViewModels
         internal BindableCollection<AccountViewModel> AccountViewModels { get; }
 
         private CollectionViewSource AccountViewSource { get; }
-
-        private PasswordBox PasswordBox { get; set; }
 
         public void AddAccount()
         {
@@ -122,10 +111,10 @@ namespace Candado.Desktop.ViewModels
 
                 if (Account.IsReadOnlyName)
                 {
-                    AccountService.Delete(Account.Name);
+                    AccountService.Delete(Account.AccountName);
                 }
 
-                Status = $"'{Account.Name}' account deleted!";
+                Status = $"'{Account.AccountName}' account deleted!";
 
                 AccountViewModels.Remove(Account);
 
@@ -150,7 +139,7 @@ namespace Candado.Desktop.ViewModels
                     return;
                 }
 
-                var duplicate = AccountViewModels.GroupBy(vm => vm.Name).Any(grp => grp.Count() > 1);
+                var duplicate = AccountViewModels.GroupBy(vm => vm.AccountName).Any(grp => grp.Count() > 1);
 
                 if (duplicate)
                 {
@@ -183,8 +172,8 @@ namespace Candado.Desktop.ViewModels
             if (Account == null) return;
 
             var message = string.IsNullOrEmpty(Account.Password) ?
-                $"No password available for account '{Account.Name}'" :
-                $"Password for account '{Account.Name}':\n\n{Account.Password}";
+                $"No password available for account '{Account.AccountName}'" :
+                $"Password for account '{Account.AccountName}':\n\n{Account.Password}";
 
             DialogService.Notify(message);
         }
@@ -192,31 +181,8 @@ namespace Candado.Desktop.ViewModels
         protected override void OnDeactivate(bool close)
         {
             AccountViewSource.Filter -= AccountViewSource_Filter;
-            PasswordBox.PasswordChanged -= PasswordBox_PasswordChanged;
-            PasswordBox = null;
 
             base.OnDeactivate(close);
-        }
-
-        protected override void OnViewAttached(object view, object context)
-        {
-            base.OnViewAttached(view, context);
-
-            var frameworkElement = view as FrameworkElement;
-
-            if (frameworkElement == null) return;
-
-            PasswordBox = frameworkElement.FindName(PasswordBoxControl) as PasswordBox;
-
-            if (PasswordBox == null)
-            {
-                DialogService.Notify("PasswordBox input not found.");
-
-                return;
-            }
-
-            PasswordBox.PasswordChanged -= PasswordBox_PasswordChanged;
-            PasswordBox.PasswordChanged += PasswordBox_PasswordChanged;
         }
 
         protected override void OnViewReady(object view)
@@ -232,11 +198,13 @@ namespace Candado.Desktop.ViewModels
                 Func<string, string> dencrypt = text => CryptoService.Decrypt(SecretKeyProvider.GetSecretKey(), text);
 
                 var items = AccountService.GetAll().OrderBy(x => x.Name);
-                
+
                 foreach (var item in items)
                 {
                     AccountViewModels.Add(new AccountViewModel(item, dencrypt));
                 }
+
+                Account = AccountViewModels.FirstOrDefault();
             }
             catch (Exception e)
             {
@@ -248,21 +216,14 @@ namespace Candado.Desktop.ViewModels
         {
             var viewModel = e.Item as AccountViewModel;
 
-            if (String.IsNullOrEmpty(Filter) || Filter.Length == 0 || viewModel.Name.Length == 0)
+            if (String.IsNullOrEmpty(Filter) || Filter.Length == 0 || viewModel.AccountName.Length == 0)
             {
                 e.Accepted = true;
 
                 return;
             }
 
-            e.Accepted = viewModel.Name.ToLower().Contains(Filter.ToLower());
-        }
-
-        private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
-        {
-            if (Account == null) return;
-
-            Account.Password = PasswordBox.Password;
+            e.Accepted = viewModel.AccountName.ToLower().Contains(Filter.ToLower());
         }
     }
 }

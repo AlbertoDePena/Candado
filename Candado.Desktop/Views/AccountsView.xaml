@@ -72,35 +72,16 @@
                      cal:Message.Attach="[Event MouseDoubleClick] = [Action ViewAccount()]">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <Label Content="{Binding Name}"/>
+                        <Label Content="{Binding AccountName}"/>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
 
             <GridSplitter Grid.Row="0" Grid.RowSpan="5" Grid.Column="1" />
 
-            <DockPanel Grid.Row="0" Grid.Column="2" ToolTip="Account Name">
-                <Image Source="../Images/account.png" />
-                <TextBox Text="{Binding Account.Name, UpdateSourceTrigger=PropertyChanged}" 
-                         IsReadOnly="{Binding Account.IsReadOnlyName, UpdateSourceTrigger=PropertyChanged}" />
-            </DockPanel>
-
-            <DockPanel Grid.Row="1" Grid.Column="2" ToolTip="User Name / Email">
-                <Image Source="../Images/user.png" />
-                <TextBox Text="{Binding Account.UserName, UpdateSourceTrigger=PropertyChanged}" />
-            </DockPanel>
-
-            <DockPanel Grid.Row="2" Grid.Column="2" ToolTip="Password">
-                <Image Source="../Images/password.png" />
-                <PasswordBox x:Name="PasswordBoxControl" />
-            </DockPanel>
-
-            <ScrollViewer Grid.Row="3" Grid.Column="2" Grid.RowSpan="2" 
-                          HorizontalScrollBarVisibility="Disabled" 
-                          VerticalScrollBarVisibility="Auto">
-                <TextBox Style="{StaticResource MultiLine}" ToolTip="Description"
-                     Text="{Binding Account.Description, UpdateSourceTrigger=PropertyChanged}" />
-            </ScrollViewer>
+            <ContentControl x:Name="Account" 
+                            Grid.Row="0" Grid.Column="2" Grid.RowSpan="5" />
+            
         </Grid>
     </DockPanel>
 </UserControl>
