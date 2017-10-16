@@ -85,6 +85,7 @@
     <Compile Include="CustomWindowManager.cs" />
     <Compile Include="DialogService.cs" />
     <Compile Include="Events\LoginEvent.cs" />
+    <Compile Include="PasswordBoxHelper.cs" />
     <Compile Include="ViewModels\AccountsViewModel.cs" />
     <Compile Include="ViewModels\AccountViewModel.cs" />
     <Compile Include="ViewModels\LoginViewModel.cs" />

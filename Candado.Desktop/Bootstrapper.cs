@@ -5,6 +5,7 @@ using Candado.Desktop.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Threading;
 
 namespace Candado.Desktop
@@ -16,6 +17,9 @@ namespace Candado.Desktop
         public Bootstrapper()
         {
             Initialize();
+
+            ConventionManager.AddElementConvention<PasswordBox>(
+                PasswordBoxHelper.BoundPasswordProperty, "Password", "PasswordChanged");
         }
 
         protected override void BuildUp(object instance)

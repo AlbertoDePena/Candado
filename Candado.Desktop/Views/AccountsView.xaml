@@ -48,7 +48,7 @@
         </ToolBar>
 
         <StatusBar DockPanel.Dock="Bottom">
-            <Label Content="{Binding Status, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <Label x:Name="Status" />
         </StatusBar>
         
         <Grid DockPanel.Dock="Bottom">
@@ -65,8 +65,7 @@
                 <RowDefinition />
             </Grid.RowDefinitions>
 
-            <TextBox Grid.Row="0" Grid.Column="0" 
-                     Text="{Binding Filter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBox Grid.Row="0" Grid.Column="0" x:Name="Filter"/>
 
             <ListBox Grid.Row="1" Grid.RowSpan="4" Grid.Column="0" 
                      ItemsSource="{Binding Accounts}" SelectedItem="{Binding Account}"
@@ -96,7 +95,9 @@
                 <PasswordBox x:Name="PasswordBoxControl" />
             </DockPanel>
 
-            <ScrollViewer Grid.Row="3" Grid.Column="2" Grid.RowSpan="2" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <ScrollViewer Grid.Row="3" Grid.Column="2" Grid.RowSpan="2" 
+                          HorizontalScrollBarVisibility="Disabled" 
+                          VerticalScrollBarVisibility="Auto">
                 <TextBox Style="{StaticResource MultiLine}" ToolTip="Description"
                      Text="{Binding Account.Description, UpdateSourceTrigger=PropertyChanged}" />
             </ScrollViewer>

@@ -23,7 +23,7 @@
 
         <DockPanel Grid.Row="2" Grid.Column="1" ToolTip="Password">
             <Image Source="../Images/password.png" />
-            <PasswordBox x:Name="PasswordBoxControl"/>
+            <PasswordBox x:Name="Password"/>
         </DockPanel>
 
         <Button x:Name="Login" Grid.Row="3" Grid.Column="1" Content="Login" />
