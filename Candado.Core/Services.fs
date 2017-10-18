@@ -30,11 +30,11 @@ module RegistryHelper =
 
     let Init secretKey masterPsw =
         let validateArgs root =
-                if String.IsNullOrEmpty(secretKey) then
-                    Rop.fail "Secret key is required"
-                elif String.IsNullOrEmpty(masterPsw) then
-                    Rop.fail "Master password is required"
-                else Rop.succeed root
+            if String.IsNullOrEmpty(secretKey) then
+                Rop.fail "Secret key is required"
+            elif String.IsNullOrEmpty(masterPsw) then
+                Rop.fail "Master password is required"
+            else Rop.succeed root
 
         let getCandadoRegistry () =
             let registry = Registry.CurrentUser.OpenSubKey(CandadoField, true)
@@ -77,21 +77,22 @@ type ICryptoService =
 type CryptoService() =
 
     let createDes (key: string) =
-        use md5   = new MD5CryptoServiceProvider()
-        let des   = new TripleDESCryptoServiceProvider()
+        use md5 = new MD5CryptoServiceProvider()
+        let des = new TripleDESCryptoServiceProvider()
+        let size = des.BlockSize / 8
         let bytes = Encoding.Unicode.GetBytes(key)
 
         des.Key <- md5.ComputeHash(bytes)
-        des.IV  <- Array.zeroCreate (des.BlockSize / 8)
+        des.IV <- Array.zeroCreate (size)
         des
 
     interface ICryptoService with
 
         member __.Decrypt key text =
-            use stream       = new MemoryStream()
-            let des          = createDes key
+            use stream = new MemoryStream()
+            let des = createDes key
             use cryptoStream = new CryptoStream(stream, des.CreateDecryptor(), CryptoStreamMode.Write)
-            let bytes        = Convert.FromBase64String(text)
+            let bytes = Convert.FromBase64String(text)
 
             cryptoStream.Write(bytes, 0, bytes.Length)
             cryptoStream.FlushFinalBlock()
@@ -101,10 +102,10 @@ type CryptoService() =
             Encoding.Unicode.GetString(array)
 
         member __.Encrypt key text =
-            use stream       = new MemoryStream()
-            let des          = createDes key
+            use stream = new MemoryStream()
+            let des = createDes key
             use cryptoStream = new CryptoStream(stream, des.CreateEncryptor(), CryptoStreamMode.Write)
-            let bytes        = Encoding.Unicode.GetBytes(text)
+            let bytes = Encoding.Unicode.GetBytes(text)
 
             cryptoStream.Write(bytes, 0, bytes.Length)
             cryptoStream.FlushFinalBlock()
@@ -122,7 +123,7 @@ type SecretKeyProvider() =
 
         member __.GetSecretKey () =
             let registry = getRootRegistry()
-            let value    = registry.GetValue(SecretKeyField)
+            let value = registry.GetValue(SecretKeyField)
 
             registry.Close()
 
@@ -147,7 +148,7 @@ type AccountService() =
 
         member __.Authenticate masterPsw =
             let registry = getRootRegistry()
-            let value    = registry.GetValue(MasterPswField) :?> string
+            let value = registry.GetValue(MasterPswField) :?> string
 
             not <| String.IsNullOrEmpty(value) && value = masterPsw
  
@@ -163,10 +164,10 @@ type AccountService() =
             let toAccount (name: string) =
                 let childRegistry = registry.OpenSubKey(name)
                 
-                { Name = name; 
-                  Key  = getValue childRegistry "Key";
-                  Psw  = getValue childRegistry "Psw";
-                  Desc = getValue childRegistry "Desc"; }
+                { Name = name
+                  Key = getValue childRegistry "Key"
+                  Psw = getValue childRegistry "Psw"
+                  Desc = getValue childRegistry "Desc" }
                
               
             let accounts = 
@@ -207,7 +208,7 @@ type AccountService() =
                     registry.Close()
 
                 let rootRegistry = getRootRegistry()
-                let registry     = rootRegistry.OpenSubKey(account.Name, true)
+                let registry = rootRegistry.OpenSubKey(account.Name, true)
 
                 if isNull registry then
                     setValues <| rootRegistry.CreateSubKey(account.Name)

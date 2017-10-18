@@ -1,12 +1,11 @@
 ﻿namespace Candado.Core
 
-type Account =
-    {
-        Name: string; 
-        Key: string; 
-        Psw: string; 
-        Desc: string; 
-    }
+type Account = {
+    Name: string 
+    Key: string 
+    Psw: string 
+    Desc: string 
+}
     
 [<AutoOpen>]
 module Extensions =

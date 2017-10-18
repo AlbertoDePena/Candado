@@ -3,17 +3,20 @@ open ROP.Toolkit
 open ROP.Toolkit.Operators
 open Candado.Core
 
-type Args = { SecretKey: string; MasterPsw: string; }
+type Args = { 
+    SecretKey: string 
+    MasterPsw: string
+}
 
 let rec parseCmdLine args argsSoFar =
     match args with
     | [] -> argsSoFar
-    | "--SecretKey"::tail ->
-        let newArgs = { argsSoFar with SecretKey = tail.Head }
-        parseCmdLine tail.Tail newArgs
-    | "--MasterPsw"::tail ->
-        let newArgs = { argsSoFar with MasterPsw = tail.Head }
-        parseCmdLine tail.Tail newArgs
+    | "--SecretKey"::chunk ->
+        let newArgs = { argsSoFar with SecretKey = chunk.Head }
+        parseCmdLine chunk.Tail newArgs
+    | "--MasterPsw"::chunk ->
+        let newArgs = { argsSoFar with MasterPsw = chunk.Head }
+        parseCmdLine chunk.Tail newArgs
     | _ -> argsSoFar
 
 let validateArgs args =
@@ -26,8 +29,13 @@ let validateArgs args =
 [<EntryPoint>]
 let main argv = 
     try
-        let args       = argv |> Array.toList
-        let argsSoFar  = { SecretKey = ""; MasterPsw = "" }
+        let args = argv |> Array.toList
+
+        let argsSoFar = { 
+            SecretKey = ""
+            MasterPsw = "" 
+        }
+
         let parsedArgs = parseCmdLine args argsSoFar
         
         let init args =
