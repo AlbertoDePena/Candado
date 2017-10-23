@@ -21,82 +21,92 @@
 <summary>
  (&gt;&gt;=) Pipe a two-track value into a switch function.
  (&gt;=&gt;) Compose two switches into another switch.
- Note: &gt;&gt; map is the same as &gt;=&gt; switch
+ Note: &gt;&gt; TwoTrack.map is the same as &gt;=&gt; TwoTrack.switch
 </summary>
 </member>
-<member name="M:ROP.Toolkit.Rop.valueOrDefault``2(Microsoft.FSharp.Core.FSharpFunc{``0,``1},ROP.Toolkit.TwoTrack{``1,``0})">
+<member name="M:ROP.Toolkit.TwoTrack.failed``2(ROP.Toolkit.TwoTrack{``0,``1})">
+<summary>
+ True if the input is failure.
+</summary>
+</member>
+<member name="M:ROP.Toolkit.TwoTrack.succeeded``2(ROP.Toolkit.TwoTrack{``0,``1})">
+<summary>
+ True if the input is success.
+</summary>
+</member>
+<member name="M:ROP.Toolkit.TwoTrack.valueOr``2(Microsoft.FSharp.Core.FSharpFunc{``0,``1},ROP.Toolkit.TwoTrack{``1,``0})">
 <summary>
  Given a two-track result, in the success case, return the value.
  In the failure case, determine the value to return by 
  applying a function to the result
 </summary>
 </member>
-<member name="M:ROP.Toolkit.Rop.plus``5(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``2}},Microsoft.FSharp.Core.FSharpFunc{``3,Microsoft.FSharp.Core.FSharpFunc{``3,``3}},Microsoft.FSharp.Core.FSharpFunc{``4,ROP.Toolkit.TwoTrack{``0,``3}},Microsoft.FSharp.Core.FSharpFunc{``4,ROP.Toolkit.TwoTrack{``1,``3}},``4)">
+<member name="M:ROP.Toolkit.TwoTrack.plus``5(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``2}},Microsoft.FSharp.Core.FSharpFunc{``3,Microsoft.FSharp.Core.FSharpFunc{``3,``3}},Microsoft.FSharp.Core.FSharpFunc{``4,ROP.Toolkit.TwoTrack{``0,``3}},Microsoft.FSharp.Core.FSharpFunc{``4,ROP.Toolkit.TwoTrack{``1,``3}},``4)">
 <summary>
  Add two switches in parallel
 </summary>
 </member>
-<member name="M:ROP.Toolkit.Rop.doubleMap``4(Microsoft.FSharp.Core.FSharpFunc{``0,``1},Microsoft.FSharp.Core.FSharpFunc{``2,``3})">
+<member name="M:ROP.Toolkit.TwoTrack.doubleMap``4(Microsoft.FSharp.Core.FSharpFunc{``0,``1},Microsoft.FSharp.Core.FSharpFunc{``2,``3})">
 <summary>
  Convert two one-track functions into a two-track function
 </summary>
 </member>
-<member name="M:ROP.Toolkit.Rop.tryCatchAsync``3(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Control.FSharpAsync{``1}},Microsoft.FSharp.Core.FSharpFunc{System.Exception,``2},``0)">
+<member name="M:ROP.Toolkit.TwoTrack.tryCatchAsync``3(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Control.FSharpAsync{``1}},Microsoft.FSharp.Core.FSharpFunc{System.Exception,``2},``0)">
 <summary>
  Execute an async function (with exception handler) then convert into a two-track result
 </summary>
 </member>
-<member name="M:ROP.Toolkit.Rop.tryCatch``3(Microsoft.FSharp.Core.FSharpFunc{``0,``1},Microsoft.FSharp.Core.FSharpFunc{System.Exception,``2},``0)">
+<member name="M:ROP.Toolkit.TwoTrack.tryCatch``3(Microsoft.FSharp.Core.FSharpFunc{``0,``1},Microsoft.FSharp.Core.FSharpFunc{System.Exception,``2},``0)">
 <summary>
  Convert a one-track function into a switch with exception handler
 </summary>
 </member>
-<member name="M:ROP.Toolkit.Rop.tee``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.Unit},``0)">
+<member name="M:ROP.Toolkit.TwoTrack.tee``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.Unit},``0)">
 <summary>
  Convert a dead-end function into a one-track function
 </summary>
 </member>
-<member name="M:ROP.Toolkit.Rop.mapOption``2(Microsoft.FSharp.Core.FSharpOption{``0},``1)">
+<member name="M:ROP.Toolkit.TwoTrack.mapOption``2(Microsoft.FSharp.Core.FSharpOption{``0},``1)">
 <summary>
  Convert an option into a two-track function
 </summary>
 </member>
-<member name="M:ROP.Toolkit.Rop.mapChoice``2(Microsoft.FSharp.Core.FSharpChoice{``0,``1})">
+<member name="M:ROP.Toolkit.TwoTrack.mapChoice``2(Microsoft.FSharp.Core.FSharpChoice{``0,``1})">
 <summary>
  Convert a choice into a two-track function
 </summary>
 </member>
-<member name="M:ROP.Toolkit.Rop.map``3(Microsoft.FSharp.Core.FSharpFunc{``0,``1})">
+<member name="M:ROP.Toolkit.TwoTrack.map``3(Microsoft.FSharp.Core.FSharpFunc{``0,``1})">
 <summary>
  Convert a one-track function into a two-track function
 </summary>
 </member>
-<member name="M:ROP.Toolkit.Rop.switch``3(Microsoft.FSharp.Core.FSharpFunc{``0,``1})">
+<member name="M:ROP.Toolkit.TwoTrack.switch``3(Microsoft.FSharp.Core.FSharpFunc{``0,``1})">
 <summary>
  Convert a one-track function into a switch
 </summary>
 </member>
-<member name="M:ROP.Toolkit.Rop.bind``3(Microsoft.FSharp.Core.FSharpFunc{``0,ROP.Toolkit.TwoTrack{``1,``2}})">
+<member name="M:ROP.Toolkit.TwoTrack.bind``3(Microsoft.FSharp.Core.FSharpFunc{``0,ROP.Toolkit.TwoTrack{``1,``2}})">
 <summary>
  Convert a switch function into a two-track function
 </summary>
 </member>
-<member name="M:ROP.Toolkit.Rop.either``3(Microsoft.FSharp.Core.FSharpFunc{``0,``1},Microsoft.FSharp.Core.FSharpFunc{``2,``1},ROP.Toolkit.TwoTrack{``0,``2})">
+<member name="M:ROP.Toolkit.TwoTrack.either``3(Microsoft.FSharp.Core.FSharpFunc{``0,``1},Microsoft.FSharp.Core.FSharpFunc{``2,``1},ROP.Toolkit.TwoTrack{``0,``2})">
 <summary>
  Apply either a success or failure function
 </summary>
 </member>
-<member name="M:ROP.Toolkit.Rop.fail``2(``0)">
+<member name="M:ROP.Toolkit.TwoTrack.fail``2(``0)">
 <summary>
  Convert a single value into a Failure two-track result
 </summary>
 </member>
-<member name="M:ROP.Toolkit.Rop.succeed``2(``0)">
+<member name="M:ROP.Toolkit.TwoTrack.succeed``2(``0)">
 <summary>
  Convert a single value into a two-track Success result
 </summary>
 </member>
-<member name="T:ROP.Toolkit.Rop">
+<member name="T:ROP.Toolkit.TwoTrack">
 <summary>
  Use TwoTrack type as your underlying model for dataflow situations.
  Create a function for each step in the use case. 

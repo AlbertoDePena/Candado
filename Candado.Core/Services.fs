@@ -31,10 +31,10 @@ module RegistryHelper =
     let Init secretKey masterPsw =
         let validateArgs root =
             if String.IsNullOrEmpty(secretKey) then
-                Rop.fail "Secret key is required"
+                TwoTrack.fail "Secret key is required"
             elif String.IsNullOrEmpty(masterPsw) then
-                Rop.fail "Master password is required"
-            else Rop.succeed root
+                TwoTrack.fail "Master password is required"
+            else TwoTrack.succeed root
 
         let getCandadoRegistry () =
             let registry = Registry.CurrentUser.OpenSubKey(CandadoField, true)
@@ -47,28 +47,30 @@ module RegistryHelper =
             if not <| String.IsNullOrEmpty(value) then
                 printfn "Secret key has already been set"
             else root.SetValue(SecretKeyField, secretKey)
-               
-            Rop.succeed root
+            root   
 
         let setMasterPswRegistry (root: RegistryKey) =
             let value = root.GetValue(MasterPswField) :?> string
             if not <| String.IsNullOrEmpty(value) then
                 printfn "Master password has already been set"
             else root.SetValue(MasterPswField, masterPsw)
-                    
-            Rop.succeed root
+            root
             
+        let throwException error =
+            failwith error
+        
+        let closeRegistry (root: RegistryKey) =
+            root.Close()
+
         let execute =
-            validateArgs
-            >=> setSecretKeyRegistry
-            >=> setMasterPswRegistry
-            >> Rop.valueOrDefault (fun ex -> failwith ex)
+            getCandadoRegistry
+            >> validateArgs
+            >> TwoTrack.map setSecretKeyRegistry
+            >> TwoTrack.map setMasterPswRegistry
+            >> TwoTrack.map closeRegistry
+            >> TwoTrack.valueOr throwException
             
-        let registry = getCandadoRegistry()
-
-        registry |> execute |> ignore
-
-        registry.Close()
+        execute()
 
 type ICryptoService =
     abstract member Decrypt : string -> string -> string
@@ -225,31 +227,31 @@ type AccountService() =
             
                 let validateName account = 
                     if String.IsNullOrEmpty(account.Name) then
-                        Rop.fail <| sprintf "Account name is required"
+                        TwoTrack.fail <| sprintf "Account name is required"
                     elif invalidLength account.Name then
-                        Rop.fail <| tooLong "Account name"
-                    else Rop.succeed account
+                        TwoTrack.fail <| tooLong "Account name"
+                    else TwoTrack.succeed account
 
                 let validateKey account =
                     if String.IsNullOrEmpty(account.Key) then
-                        Rop.succeed { account with Key = "" }
+                        TwoTrack.succeed { account with Key = "" }
                     elif invalidLength account.Key then
-                        Rop.fail <| tooLong "Key"
-                    else Rop.succeed account
+                       TwoTrack.fail <| tooLong "Key"
+                    else TwoTrack.succeed account
 
                 let validatePsw account =
                     if String.IsNullOrEmpty(account.Psw) then
-                        Rop.succeed { account with Psw = "" }
+                        TwoTrack.succeed { account with Psw = "" }
                     elif invalidLength account.Psw then
-                        Rop.fail <| tooLong "Psw"
-                    else Rop.succeed account
+                        TwoTrack.fail <| tooLong "Psw"
+                    else TwoTrack.succeed account
 
                 let validateDesc account =
                     if String.IsNullOrEmpty(account.Desc) then
-                        Rop.succeed { account with Desc = "" }
+                        TwoTrack.succeed { account with Desc = "" }
                     elif invalidLength account.Desc then
-                        Rop.fail <| tooLong "Description"
-                    else Rop.succeed account
+                        TwoTrack.fail <| tooLong "Description"
+                    else TwoTrack.succeed account
 
                 let validateAccount =
                     validateName 
@@ -258,15 +260,18 @@ type AccountService() =
                     >=> validateDesc
 
                 match validateAccount account with
-                | Failure f -> Rop.fail f
-                | Success _ -> Rop.succeed account
+                | Failure e -> Failure e
+                | Success _ -> Success account
 
             let tryUpsert =
-                Rop.tryCatch (Rop.tee upsert) (fun ex -> ex.ToInnerMessage())
+                TwoTrack.tryCatch (TwoTrack.tee upsert) (fun ex -> ex.ToInnerMessage())
+
+            let throwException message =
+                failwith <| sprintf "Failed to save / update account: %s" message
 
             let save =
                 toDomain
-                >> Rop.bind tryUpsert
-                >> Rop.valueOrDefault (fun e -> failwith <| sprintf "Failed to save / update account: %s" e)
+                >> TwoTrack.bind tryUpsert
+                >> TwoTrack.valueOr throwException
 
             save account |> ignore

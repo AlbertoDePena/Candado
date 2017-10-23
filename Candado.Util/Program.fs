@@ -3,51 +3,64 @@ open ROP.Toolkit
 open ROP.Toolkit.Operators
 open Candado.Core
 
+type SecretKey = SecretKey of string
+
+type MasterPsw = MasterPsw of string
+
 type Args = { 
-    SecretKey: string 
-    MasterPsw: string
+    SecretKey: SecretKey 
+    MasterPsw: MasterPsw
 }
 
 let rec parseCmdLine args argsSoFar =
     match args with
     | [] -> argsSoFar
     | "--SecretKey"::chunk ->
-        let newArgs = { argsSoFar with SecretKey = chunk.Head }
+        let newArgs = { 
+            argsSoFar with SecretKey = SecretKey chunk.Head 
+        }
         parseCmdLine chunk.Tail newArgs
     | "--MasterPsw"::chunk ->
-        let newArgs = { argsSoFar with MasterPsw = chunk.Head }
+        let newArgs = { 
+            argsSoFar with MasterPsw = MasterPsw chunk.Head 
+        }
         parseCmdLine chunk.Tail newArgs
     | _ -> argsSoFar
-
+    
 let validateArgs args =
-    if String.IsNullOrEmpty(args.SecretKey) then
-        Rop.fail "Please provide --SecretKey <secret key>"
-    elif String.IsNullOrEmpty(args.MasterPsw) then
-        Rop.fail "Please provide --MasterPsw <master password>"
-    else Rop.succeed args
+    if args.SecretKey = (SecretKey "") then
+        TwoTrack.fail "Please provide --SecretKey <secret key>"
+    elif args.MasterPsw = (MasterPsw "") then
+        TwoTrack.fail "Please provide --MasterPsw <master password>"
+    else TwoTrack.succeed args
 
 [<EntryPoint>]
 let main argv = 
+    let log message =
+        printfn "%s" message
+    
     try
         let args = argv |> Array.toList
 
         let argsSoFar = { 
-            SecretKey = ""
-            MasterPsw = "" 
+            SecretKey = SecretKey ""
+            MasterPsw = MasterPsw "" 
         }
-
-        let parsedArgs = parseCmdLine args argsSoFar
         
         let init args =
-            RegistryHelper.Init args.SecretKey args.MasterPsw
+            let (SecretKey secretKey) = args.SecretKey
+            let (MasterPsw masterPsw) = args.MasterPsw
+
+            RegistryHelper.Init secretKey masterPsw
             
         let execute =
             validateArgs
-            >=> Rop.switch init
-            >> Rop.valueOrDefault (fun x -> printfn "%s" x)
+            >=> TwoTrack.switch init
+            >> TwoTrack.valueOr log
         
-        execute parsedArgs
-        printfn "Registry has been updated!"
+        execute <| parseCmdLine args argsSoFar
+
+        log "Done!"
     with
-        ex -> printfn "%s" <| ex.ToInnerMessage()
+        ex -> ex.ToInnerMessage() |> log
     0 //! return an integer exit code
