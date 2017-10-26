@@ -29,10 +29,10 @@ let rec parseCmdLine args argsSoFar =
     
 let validateArgs args =
     if args.SecretKey = (SecretKey "") then
-        TwoTrack.fail "Please provide --SecretKey <secret key>"
+        Rop.fail "Please provide --SecretKey <secret key>"
     elif args.MasterPsw = (MasterPsw "") then
-        TwoTrack.fail "Please provide --MasterPsw <master password>"
-    else TwoTrack.succeed args
+        Rop.fail "Please provide --MasterPsw <master password>"
+    else Rop.succeed args
 
 [<EntryPoint>]
 let main argv = 
@@ -55,8 +55,8 @@ let main argv =
             
         let execute =
             validateArgs
-            >=> TwoTrack.switch init
-            >> TwoTrack.valueOr log
+            >=> Rop.switch init
+            >> Rop.valueOr log
         
         execute <| parseCmdLine args argsSoFar
 
