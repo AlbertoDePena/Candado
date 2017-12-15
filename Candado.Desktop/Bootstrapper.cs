@@ -31,8 +31,8 @@ namespace Candado.Desktop
                             .Singleton<IEventAggregator, EventAggregator>()
                             .Singleton<IWindowManager, CustomWindowManager>()
                             .Singleton<IDialogService, DialogService>()
-                            .Singleton<IAccountService, AccountService>()
-                            .Singleton<ISecretKeyProvider, SecretKeyProvider>()
+                            .Singleton<IAuthenticationService, AuthenticationService>()
+                            .Singleton<IStorageService, StorageService>()
                             .Singleton<ICryptoService, CryptoService>()
                             .PerRequest<IShell, ShellViewModel>();
         }
@@ -50,7 +50,7 @@ namespace Candado.Desktop
         {
             e.Handled = true;
 
-            MessageBox.Show(Extensions.GetInnerMessage(e.Exception), "An error as occurred", MessageBoxButton.OK);
+            MessageBox.Show(DataTypes.GetInnerMessage(e.Exception), "An error as occurred", MessageBoxButton.OK);
         }
     }
 }

@@ -11,25 +11,28 @@ namespace Candado.Desktop.ViewModels
         private string _password;
         private string _userName;
 
-        public AccountViewModel(Account account, Func<string, string> decrypt)
+        public AccountViewModel(Dtos.AccountDto account, Func<string, string> decrypt)
         {
             if (account == null)
                 throw new ArgumentNullException(nameof(account));
 
-            if (string.IsNullOrEmpty(account.Name))
-                throw new ArgumentNullException(nameof(account.Name));
+            if (string.IsNullOrEmpty(account.AccountName))
+                throw new ArgumentNullException(nameof(account.AccountName));
 
-            _accountName = account.Name;
-            _userName = account.Key;
-            _password = String.IsNullOrEmpty(account.Psw) ? string.Empty : decrypt(account.Psw);
-            _description = account.Desc;
+            _accountName = account.AccountName;
+            _userName = account.UserName;
+            _password = String.IsNullOrEmpty(account.Password) ? string.Empty : decrypt(account.Password);
+            _description = account.Description;
+
             CanEditName = false;
+            HasChanges = false;
         }
 
         public AccountViewModel()
         {
             _accountName = "New Account";
             CanEditName = true;
+            HasChanges = true;
         }
 
         public string AccountName
@@ -38,6 +41,7 @@ namespace Candado.Desktop.ViewModels
             set
             {
                 _accountName = value;
+                HasChanges = true;
                 NotifyOfPropertyChange();
             }
         }
@@ -50,11 +54,14 @@ namespace Candado.Desktop.ViewModels
             set
             {
                 _description = value;
+                HasChanges = true;
                 NotifyOfPropertyChange();
             }
         }
 
-        public bool IsReadOnlyName => !CanEditName;
+        public bool HasChanges { get; private set; }
+
+        public bool IsPersisted => !CanEditName;
 
         public string Password
         {
@@ -62,6 +69,7 @@ namespace Candado.Desktop.ViewModels
             set
             {
                 _password = value;
+                HasChanges = true;
                 NotifyOfPropertyChange();
             }
         }
@@ -72,24 +80,26 @@ namespace Candado.Desktop.ViewModels
             set
             {
                 _userName = value;
+                HasChanges = true;
                 NotifyOfPropertyChange();
             }
         }
 
         public bool CanSave() => !string.IsNullOrEmpty(AccountName);
 
-        public Account ViewModelToModel(Func<string, string> encrypt)
+        public Dtos.AccountDto ViewModelToModel(Func<string, string> encrypt)
         {
             var password = String.IsNullOrEmpty(Password) ? string.Empty : encrypt(Password);
 
-            return new Account(AccountName, UserName, password, Description);
+            return new Dtos.AccountDto(AccountName, UserName, password, Description);
         }
 
-        internal void SetReadOnlyName()
+        internal void OnPostSave()
         {
             CanEditName = false;
+            HasChanges = false;
 
-            NotifyOfPropertyChange(nameof(IsReadOnlyName));
+            NotifyOfPropertyChange(nameof(IsPersisted));
         }
     }
 }

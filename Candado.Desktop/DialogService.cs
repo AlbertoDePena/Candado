@@ -16,7 +16,7 @@ namespace Candado.Desktop
             => MessageBox.Show(message, Title, MessageBoxButton.OK, MessageBoxImage.Error);
 
         public void Exception(Exception e) 
-            => Error(Extensions.GetInnerMessage(e));
+            => Error(DataTypes.GetInnerMessage(e));
 
         public void Notify(string message)
             => MessageBox.Show(message, Title, MessageBoxButton.OK, MessageBoxImage.Information);

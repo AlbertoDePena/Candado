@@ -1,15 +1,10 @@
 ﻿open System
-open ROP.Toolkit
-open ROP.Toolkit.Operators
+open ResultExtensions
 open Candado.Core
 
-type SecretKey = SecretKey of string
-
-type MasterPsw = MasterPsw of string
-
 type Args = { 
-    SecretKey: SecretKey 
-    MasterPsw: MasterPsw
+    SecretKey: string 
+    Password: string
 }
 
 let rec parseCmdLine args argsSoFar =
@@ -17,50 +12,50 @@ let rec parseCmdLine args argsSoFar =
     | [] -> argsSoFar
     | "--SecretKey"::chunk ->
         let newArgs = { 
-            argsSoFar with SecretKey = SecretKey chunk.Head 
+            argsSoFar with SecretKey = chunk.Head 
         }
         parseCmdLine chunk.Tail newArgs
-    | "--MasterPsw"::chunk ->
+    | "--Password"::chunk ->
         let newArgs = { 
-            argsSoFar with MasterPsw = MasterPsw chunk.Head 
+            argsSoFar with Password = chunk.Head 
         }
         parseCmdLine chunk.Tail newArgs
     | _ -> argsSoFar
     
 let validateArgs args =
-    if args.SecretKey = (SecretKey "") then
-        Rop.fail "Please provide --SecretKey <secret key>"
-    elif args.MasterPsw = (MasterPsw "") then
-        Rop.fail "Please provide --MasterPsw <master password>"
-    else Rop.succeed args
+    if args.SecretKey = "" then
+        Error "Please provide --SecretKey"
+    elif args.Password = "" then
+        Error "Please provide --Password"
+    else Ok args
 
 [<EntryPoint>]
 let main argv = 
+
     let log message =
-        printfn "%s" message
+        printfn "%s" message; message
     
-    try
-        let args = argv |> Array.toList
+    let args = argv |> Array.toList
 
-        let argsSoFar = { 
-            SecretKey = SecretKey ""
-            MasterPsw = MasterPsw "" 
-        }
+    let argsSoFar = { 
+        SecretKey = ""
+        Password = "" 
+    }
         
-        let init args =
-            let (SecretKey secretKey) = args.SecretKey
-            let (MasterPsw masterPsw) = args.MasterPsw
-
-            RegistryHelper.Init secretKey masterPsw
+    let init args =
+        match RegEditInitializer.Initialize args.SecretKey args.Password with
+            | Ok _ -> Ok "Storage Initialized!"
+            | Error error ->
+                match error with
+                    | RegEditInitializer.SecretKeyExits -> Error "Secret Key already exists"
+                    | RegEditInitializer.MasterPasswordExists -> Error "Master Password already exists"
             
-        let execute =
-            validateArgs
-            >=> Rop.switch init
-            >> Rop.valueOr log
+    let execute =
+        validateArgs
+        >> Result.bind init
+        >> Result.valueOr log 
+        >> ignore
         
-        execute <| parseCmdLine args argsSoFar
-
-        log "Done!"
-    with
-        ex -> ex.ToInnerMessage() |> log
+    parseCmdLine args argsSoFar 
+    |> execute
     0 //! return an integer exit code
