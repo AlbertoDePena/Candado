@@ -8,15 +8,15 @@ namespace Candado.Desktop.ViewModels
 {
     public class LoginViewModel : Screen, IView
     {
-        private readonly IAccountService AccountService;
+        private readonly IAuthenticationService AuthenticationService;
         private readonly IDialogService DialogService;
         private readonly IEventAggregator EventAggregator;
         private string _password;
 
-        public LoginViewModel(IEventAggregator eventAggregator, IAccountService accountService, IDialogService dialogService)
+        public LoginViewModel(IEventAggregator eventAggregator, IAuthenticationService authenticationService, IDialogService dialogService)
         {
             EventAggregator = eventAggregator;
-            AccountService = accountService;
+            AuthenticationService = authenticationService;
             DialogService = dialogService;
         }
 
@@ -38,15 +38,15 @@ namespace Candado.Desktop.ViewModels
             try
             {
                 if (!CanLogin) return;
-
-                if (!AccountService.Authenticate(Password))
+                
+                if (!AuthenticationService.Authenticate(Password))
                 {
                     DialogService.Error("Password is invalid.");
 
                     return;
                 }
 
-                EventAggregator.PublishOnUIThread(new LoginEvent());
+                EventAggregator.PublishOnUIThread(new LoginEvent(Password));
             }
             catch (Exception e)
             {

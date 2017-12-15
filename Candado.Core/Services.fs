@@ -5,268 +5,174 @@ open System.IO
 open System.Text
 open System.Security.Cryptography
 open Microsoft.Win32
-open ROP.Toolkit
-open ROP.Toolkit.Operators
+open ResultExtensions
+open DataTypes
 
-[<AutoOpen>]
-module private Common =
+module RegEditInitializer =
 
-    [<Literal>]
-    let CandadoField = "Software\Candado"
+    type InitializeResult =
+        | SecretKeyExits
+        | MasterPasswordExists
+    
+    let Initialize secretKey password =
+        
+        let key = mapSecretKey secretKey
+        let psw = mapPassword password
 
-    [<Literal>]
-    let SecretKeyField = "SecretKey"
+        let root =
+            let registry = Registry.CurrentUser.OpenSubKey(RegEdit.RootField, true)
 
-    [<Literal>]
-    let MasterPswField = "MasterPsw"
-
-    let getRootRegistry () =
-        let registry = Registry.CurrentUser.OpenSubKey(CandadoField, true)
-        if isNull registry then
-            failwith <| sprintf "Registry '%s' not found" CandadoField
-        else registry
-
-module RegistryHelper =
-
-    let Init secretKey masterPsw =
-        let validateArgs root =
-            if String.IsNullOrEmpty(secretKey) then
-                Rop.fail "Secret key is required"
-            elif String.IsNullOrEmpty(masterPsw) then
-                Rop.fail "Master password is required"
-            else Rop.succeed root
-
-        let getCandadoRegistry () =
-            let registry = Registry.CurrentUser.OpenSubKey(CandadoField, true)
             if isNull registry then
-                Registry.CurrentUser.CreateSubKey(CandadoField)
+                Registry.CurrentUser.CreateSubKey(RegEdit.RootField)
             else registry
-            
-        let setSecretKeyRegistry (root: RegistryKey) =
-            let value = root.GetValue(SecretKeyField) :?> string
+
+        let setSecretKey (SecretKey input) (key: RegistryKey) =
+            let value = key.GetValue(RegEdit.SecretKeyField) :?> string
+
+            if String.IsNullOrEmpty(value) |> not then
+                Error SecretKeyExits
+            else 
+                let value' = String255.value input
+                key.SetValue(RegEdit.SecretKeyField, value')
+                Ok key
+
+        let setPassword (Password input) (key: RegistryKey) =
+            let value = key.GetValue(RegEdit.PasswordField) :?> string
+
             if not <| String.IsNullOrEmpty(value) then
-                printfn "Secret key has already been set"
-            else root.SetValue(SecretKeyField, secretKey)
-               
-            Rop.succeed root
+                Error MasterPasswordExists
+            else 
+                let value' = String255.value input
+                key.SetValue(RegEdit.PasswordField, value')
+                ((), key) |> Ok
 
-        let setMasterPswRegistry (root: RegistryKey) =
-            let value = root.GetValue(MasterPswField) :?> string
-            if not <| String.IsNullOrEmpty(value) then
-                printfn "Master password has already been set"
-            else root.SetValue(MasterPswField, masterPsw)
-                    
-            Rop.succeed root
-            
-        let execute =
-            validateArgs
-            >=> setSecretKeyRegistry
-            >=> setMasterPswRegistry
-            >> Rop.valueOrDefault (fun ex -> failwith ex)
-            
-        let registry = getCandadoRegistry()
-
-        registry |> execute |> ignore
-
-        registry.Close()
-
+        setSecretKey key root
+        |> Result.bind (setPassword psw)
+        |> Result.map RegEdit.disconnect
+        
 type ICryptoService =
     abstract member Decrypt : string -> string -> string
     abstract member Encrypt : string -> string -> string
+        
+type IAuthenticationService =
+    abstract member Authenticate : string -> bool
+
+type IStorageService =
+    //abstract member Initialize : string -> string -> unit
+    abstract member GetSecretKey : string -> string
+    abstract member UpdateSecretKey : string -> string -> unit
+    abstract member GetAllAccounts : string -> AccountDto []
+    abstract member UpsertAccount : string -> AccountDto -> unit
+    abstract member DeleteAccount : string -> string -> unit
+    //abstract member UpdatePassword : string -> unit
 
 type CryptoService() =
-
-    let createDes (key: string) =
-        use md5 = new MD5CryptoServiceProvider()
-        let des = new TripleDESCryptoServiceProvider()
-        let size = des.BlockSize / 8
-        let bytes = Encoding.Unicode.GetBytes(key)
-
-        des.Key <- md5.ComputeHash(bytes)
-        des.IV <- Array.zeroCreate (size)
-        des
-
+    
     interface ICryptoService with
 
         member __.Decrypt key text =
-            use stream = new MemoryStream()
-            let des = createDes key
-            use cryptoStream = new CryptoStream(stream, des.CreateDecryptor(), CryptoStreamMode.Write)
-            let bytes = Convert.FromBase64String(text)
 
-            cryptoStream.Write(bytes, 0, bytes.Length)
-            cryptoStream.FlushFinalBlock()
+            let encryptedText =
+                if String.IsNullOrEmpty(text) then
+                    invalidOp "Please provide text to decrypt"
+                else (EncryptedText text)
+                    
+            let toString (DecryptedText x) = x
 
-            let array = stream.ToArray()
-
-            Encoding.Unicode.GetString(array)
+            Crypto.decrypt (mapSecretKey key) encryptedText
+            |> Result.map toString
+            |> Result.valueOr fail
 
         member __.Encrypt key text =
-            use stream = new MemoryStream()
-            let des = createDes key
-            use cryptoStream = new CryptoStream(stream, des.CreateEncryptor(), CryptoStreamMode.Write)
-            let bytes = Encoding.Unicode.GetBytes(text)
 
-            cryptoStream.Write(bytes, 0, bytes.Length)
-            cryptoStream.FlushFinalBlock()
+            let plainText =
+                if String.IsNullOrEmpty(text) then
+                    invalidOp "Please provide text to encrypt"
+                else (PlainText text)
 
-            let array = stream.ToArray()
+            let toString (EncryptedText x) = x
 
-            Convert.ToBase64String(array)
+            Crypto.encrypt (mapSecretKey key) plainText
+            |> Result.map toString
+            |> Result.valueOr fail
 
-type ISecretKeyProvider =
-    abstract member GetSecretKey : unit -> string;
+type AuthenticationService() =
 
-type SecretKeyProvider() =
+    interface IAuthenticationService with
 
-    interface ISecretKeyProvider with
+        member __.Authenticate password =
+            
+            let disconnect (root: RegistryKey) =
+                RegEdit.disconnect (Ok true, root)
 
-        member __.GetSecretKey () =
-            let registry = getRootRegistry()
-            let value = registry.GetValue(SecretKeyField)
+            let psw = mapPassword password 
 
-            registry.Close()
-
-            if isNull value then 
-                failwith <| sprintf "%s value not found" SecretKeyField
-
-            downcast value : string
-
-type IAccountService =
-
-    abstract member GetAll : unit -> Account [];
-
-    abstract member Upsert : Account -> unit;
-
-    abstract member Delete : string -> unit;
-    
-    abstract member Authenticate : string -> bool;
-
-type AccountService() =
-     
-    interface IAccountService with
-
-        member __.Authenticate masterPsw =
-            let registry = getRootRegistry()
-            let value = registry.GetValue(MasterPswField) :?> string
-
-            not <| String.IsNullOrEmpty(value) && value = masterPsw
- 
-        member __.GetAll () =
-            let registry = getRootRegistry()
-
-            let getValue (registry: RegistryKey) name =
-                let value = registry.GetValue(name)
-                if isNull value then 
-                    String.Empty 
-                else value.ToString()
-
-            let toAccount (name: string) =
-                let childRegistry = registry.OpenSubKey(name)
+            RegEdit.connect psw
+            |> Result.bind disconnect
+            |> Result.valueOr fail
                 
-                { Name = name
-                  Key = getValue childRegistry "Key"
-                  Psw = getValue childRegistry "Psw"
-                  Desc = getValue childRegistry "Desc" }
-               
-              
-            let accounts = 
-                registry.GetSubKeyNames() 
-                |> Array.map toAccount
+type StorageService() =
+    
+    interface IStorageService with
 
-            registry.Close() 
-
-            accounts
+        member __.GetSecretKey password =
             
-        member __.Delete name =
-            let registry = getRootRegistry()
+            let toString (SecretKey key) =
+                String255.value key
+            
+            let psw = mapPassword password 
 
-            registry.DeleteSubKeyTree(name)
-            registry.Close()
+            Storage.getSecretKey psw
+            |> Result.map toString
+            |> Result.valueOr fail
+            
+        member __.UpdateSecretKey password secretKey =
+            ()
+    
+        member __.GetAllAccounts password =
 
-        member __.Upsert account =
-            let upsert account =
+            let toAccountDtos accounts =
 
-                let delete (registry: RegistryKey) key =
-                    let value = registry.GetValue(key)
-                    if not <| isNull value then
-                        registry.DeleteValue(key)
+                let getValue valueOpt =
+                    match valueOpt with
+                        | None -> String.Empty
+                        | Some x -> String255.value x
+                    
+                let toAccountDto (account: Account) : AccountDto = {
+                    AccountName = String255.value account.AccountName
+                    UserName = getValue account.UserName
+                    Password = getValue account.Password
+                    Description = getValue account.Description
+                }
+
+                accounts
+                |> Array.map toAccountDto
+
+            let psw = mapPassword password 
+
+            Storage.getAccounts psw
+            |> Result.map toAccountDtos
+            |> Result.valueOr fail
+            
+        member __.DeleteAccount password accountName =
         
-                let setValues (registry: RegistryKey) =
-                    if String.IsNullOrEmpty(account.Key) then
-                        delete registry "Key"
-                    else registry.SetValue("Key", account.Key)
-
-                    if String.IsNullOrEmpty(account.Psw) then
-                        delete registry "Psw"
-                    else registry.SetValue("Psw", account.Psw)
-
-                    if String.IsNullOrEmpty(account.Desc) then
-                        delete registry "Desc"
-                    else registry.SetValue("Desc", account.Desc)
-
-                    registry.Close()
-
-                let rootRegistry = getRootRegistry()
-                let registry = rootRegistry.OpenSubKey(account.Name, true)
-
-                if isNull registry then
-                    setValues <| rootRegistry.CreateSubKey(account.Name)
-                else setValues registry
-            
-                rootRegistry.Close()
-
-            let toDomain account =
+            let psw = mapPassword password 
+            let name = mapAccountName accountName
         
-                let invalidLength (value: string)=
-                    if value.Length > 255 then true else false
+            Storage.deleteAccount psw name
+            |> Result.valueOr fail
+
+        member __.UpsertAccount password account =
+
+            let toModel (AccountName name )(dto: AccountDto) : Account = {
+                AccountName = name
+                UserName = String255.createOptional dto.UserName
+                Password = String255.createOptional dto.Password
+                Description = String255.createOptional dto.Description
+            }
             
-                let tooLong x = sprintf "%s cannot be longer then 255 chars" x
-            
-                let validateName account = 
-                    if String.IsNullOrEmpty(account.Name) then
-                        Rop.fail <| sprintf "Account name is required"
-                    elif invalidLength account.Name then
-                        Rop.fail <| tooLong "Account name"
-                    else Rop.succeed account
+            let psw = mapPassword password 
+            let acc = toModel (mapAccountName account.AccountName) account
 
-                let validateKey account =
-                    if String.IsNullOrEmpty(account.Key) then
-                        Rop.succeed { account with Key = "" }
-                    elif invalidLength account.Key then
-                        Rop.fail <| tooLong "Key"
-                    else Rop.succeed account
-
-                let validatePsw account =
-                    if String.IsNullOrEmpty(account.Psw) then
-                        Rop.succeed { account with Psw = "" }
-                    elif invalidLength account.Psw then
-                        Rop.fail <| tooLong "Psw"
-                    else Rop.succeed account
-
-                let validateDesc account =
-                    if String.IsNullOrEmpty(account.Desc) then
-                        Rop.succeed { account with Desc = "" }
-                    elif invalidLength account.Desc then
-                        Rop.fail <| tooLong "Description"
-                    else Rop.succeed account
-
-                let validateAccount =
-                    validateName 
-                    >=> validateKey 
-                    >=> validatePsw 
-                    >=> validateDesc
-
-                match validateAccount account with
-                | Failure f -> Rop.fail f
-                | Success _ -> Rop.succeed account
-
-            let tryUpsert =
-                Rop.tryCatch (Rop.tee upsert) (fun ex -> ex.ToInnerMessage())
-
-            let save =
-                toDomain
-                >> Rop.bind tryUpsert
-                >> Rop.valueOrDefault (fun e -> failwith <| sprintf "Failed to save / update account: %s" e)
-
-            save account |> ignore
+            Storage.upsertAccount psw acc
+            |> Result.valueOr fail

@@ -1,6 +1,4 @@
 ﻿namespace Candado.Desktop.Contracts
 {
-    public interface IView
-    {
-    }
+    public interface IView { }
 }

@@ -66,8 +66,8 @@
       <AssemblyName>FSharp.Core.dll</AssemblyName>
       <HintPath>$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\$(TargetFSharpCoreVersion)\FSharp.Core.dll</HintPath>
     </Reference>
-    <Reference Include="ROP.Toolkit">
-      <HintPath>..\Binaries\ROP.Toolkit\net451\ROP.Toolkit.dll</HintPath>
+    <Reference Include="ResultExtensions">
+      <HintPath>..\Binaries\ResultExtensions\net451\ResultExtensions.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

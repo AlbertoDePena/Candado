@@ -21,7 +21,7 @@
                 </StackPanel>
             </Button>
 
-            <Button Style="{StaticResource ToolBarButton}" ToolTip="Add a new account"
+            <Button Style="{StaticResource ToolBarButton}" ToolTip="Add new account"
                     Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}"
                     cal:Message.Attach="AddAccount">
                 <StackPanel Orientation="Horizontal">
@@ -29,7 +29,7 @@
                 </StackPanel>
             </Button>
 
-            <Button Style="{StaticResource ToolBarButton}" ToolTip="Delete the selected account" 
+            <Button Style="{StaticResource ToolBarButton}" ToolTip="Delete selected account" 
                     Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}"
                     cal:Message.Attach="DeleteAccount">
                 <StackPanel Orientation="Horizontal">
@@ -39,7 +39,7 @@
 
             <Separator Margin="0,5" Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}" />
 
-            <Button Style="{StaticResource ToolBarButton}" ToolTip="View the selected account's password" 
+            <Button Style="{StaticResource ToolBarButton}" ToolTip="View selected account's password" 
                     cal:Message.Attach="ViewAccount">
                 <StackPanel Orientation="Horizontal">
                     <Image Source="../Images/password-view.png" />

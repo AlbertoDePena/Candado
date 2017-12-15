@@ -10,23 +10,22 @@ namespace Candado.Desktop.ViewModels
 {
     public class AccountsViewModel : Screen, IView
     {
-        private const string CommandLineFlag = "-EditMode";
-        private readonly IAccountService AccountService;
         private readonly ICryptoService CryptoService;
         private readonly IDialogService DialogService;
-        private readonly ISecretKeyProvider SecretKeyProvider;
+        private readonly IStorageService StorageService;
         private AccountViewModel _account;
         private string _filter;
         private string _status;
 
         public AccountsViewModel(
-            IAccountService accountService, IDialogService dialogService,
-            ICryptoService cryptoService, ISecretKeyProvider secretKeyProvider)
+            IStorageService storageService, IDialogService dialogService,
+            ICryptoService cryptoService, bool canEdit, string password)
         {
-            AccountService = accountService;
+            StorageService = storageService;
             DialogService = dialogService;
             CryptoService = cryptoService;
-            SecretKeyProvider = secretKeyProvider;
+            Password = password;
+            CanEdit = canEdit;
 
             AccountViewModels = new BindableCollection<AccountViewModel>();
             AccountViewSource = new CollectionViewSource
@@ -49,7 +48,7 @@ namespace Candado.Desktop.ViewModels
 
         public ICollectionView Accounts => AccountViewSource.View;
 
-        public bool CanEdit { get; private set; }
+        public bool CanEdit { get; }
 
         public string Filter
         {
@@ -76,6 +75,8 @@ namespace Candado.Desktop.ViewModels
 
         private CollectionViewSource AccountViewSource { get; }
 
+        private string Password { get; }
+
         public void AddAccount()
         {
             var viewModel = new AccountViewModel();
@@ -89,7 +90,7 @@ namespace Candado.Desktop.ViewModels
 
         public override void CanClose(Action<bool> callback)
         {
-            if (CanEdit)
+            if (CanEdit && AccountViewModels.Any(vm => vm.HasChanges))
             {
                 var canClose = DialogService.Confirm("Are you sure you want to exit? You might have unsaved changes.");
 
@@ -109,9 +110,9 @@ namespace Candado.Desktop.ViewModels
 
                 if (!DialogService.Confirm("Are you sure you want to delete this account?")) return;
 
-                if (Account.IsReadOnlyName)
+                if (Account.IsPersisted)
                 {
-                    AccountService.Delete(Account.AccountName);
+                    StorageService.DeleteAccount(Password, Account.AccountName);
                 }
 
                 Status = $"'{Account.AccountName}' account deleted!";
@@ -148,15 +149,15 @@ namespace Candado.Desktop.ViewModels
                     return;
                 }
 
-                Func<string, string> encrypt = text => CryptoService.Encrypt(SecretKeyProvider.GetSecretKey(), text);
+                string encrypt(string text) => CryptoService.Encrypt(StorageService.GetSecretKey(Password), text);
 
                 foreach (var vm in AccountViewModels)
                 {
                     var model = vm.ViewModelToModel(encrypt);
 
-                    AccountService.Upsert(model);
+                    StorageService.UpsertAccount(Password, model);
 
-                    vm.SetReadOnlyName();
+                    vm.OnPostSave();
                 }
 
                 Status = "Accounts saved...";
@@ -191,13 +192,9 @@ namespace Candado.Desktop.ViewModels
 
             try
             {
-                CanEdit = Environment.GetCommandLineArgs().Any(a => a == CommandLineFlag);
+                string dencrypt(string text) => CryptoService.Decrypt(StorageService.GetSecretKey(Password), text);
 
-                NotifyOfPropertyChange(nameof(CanEdit));
-
-                Func<string, string> dencrypt = text => CryptoService.Decrypt(SecretKeyProvider.GetSecretKey(), text);
-
-                var items = AccountService.GetAll().OrderBy(x => x.Name);
+                var items = StorageService.GetAllAccounts(Password).OrderBy(x => x.AccountName);
 
                 foreach (var item in items)
                 {

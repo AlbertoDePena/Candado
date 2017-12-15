@@ -15,7 +15,7 @@
 
         <DockPanel Grid.Row="0" ToolTip="Account Name">
             <Image Source="../Images/account.png" />
-            <TextBox x:Name="AccountName" IsReadOnly="{Binding IsReadOnlyName, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox x:Name="AccountName" IsReadOnly="{Binding IsPersisted, UpdateSourceTrigger=PropertyChanged}" />
         </DockPanel>
 
         <DockPanel Grid.Row="1" ToolTip="User Name / Email">
