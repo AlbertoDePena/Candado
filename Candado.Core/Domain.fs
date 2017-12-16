@@ -1,5 +1,8 @@
 ﻿namespace Candado.Core
 
+open System
+open Microsoft.Win32
+
 [<AutoOpen>]
 module Dtos =
 
@@ -12,7 +15,6 @@ module Dtos =
 
 [<RequireQualifiedAccess>]
 module String255 =
-    open System
 
     type T = private String255 of string
 
@@ -44,14 +46,15 @@ module String255 =
     let value x = apply id x
 
     let fail propertyName error =
-        match error with
-            | StringIsNullOrEmpty -> sprintf "%s is required" propertyName |> invalidOp
-            | StringLength length -> sprintf "%s cannot be longer than %i" propertyName length |> invalidOp
+        let message =
+            match error with
+                | StringIsNullOrEmpty -> sprintf "%s is required" propertyName 
+                | StringLength length -> sprintf "%s cannot be longer than %i" propertyName length 
+
+        invalidOp message
 
 [<AutoOpen>]
 module DataTypes =
-    open System
-    open Microsoft.Win32
 
     type Exception with 
         member this.ToInnerMessage() =
@@ -125,7 +128,6 @@ module DataTypes =
     
 [<RequireQualifiedAccess>]
 module RegEdit =
-    open Microsoft.Win32
     open DataTypes
 
     let [<Literal>] RootField = "Software\Candado"
@@ -133,6 +135,10 @@ module RegEdit =
     let [<Literal>] PasswordField = "MasterPassword"
 
     let [<Literal>] SecretKeyField = "SecretKey"
+
+    type InitializeResult =
+        | SecretKeyExits
+        | MasterPasswordExists
 
     let private abort (key: RegistryKey) error =
         key.Close()
@@ -149,15 +155,16 @@ module RegEdit =
 
         let getPassword (key: RegistryKey) =
             let value = key.GetValue(PasswordField)
+            let abort' () = abort key RetrieveMasterPassword
             
             if isNull value then
-                abort key RetrieveMasterPassword
+                abort' ()
             else 
                 let value' = (downcast value : string)
 
                 match String255.create value' with
                     | Ok password -> Ok (password, key)
-                    | Error _ -> abort key RetrieveMasterPassword
+                    | Error _ -> abort' ()
                      
         let verifyPassword inputPassword (masterPassword, key: RegistryKey) =
             if inputPassword <> masterPassword then
@@ -172,6 +179,39 @@ module RegEdit =
         
     let disconnect (x, registryKey: RegistryKey) =
         registryKey.Close(); x
+
+    let initialize (SecretKey secretKey) (Password password) =
+        
+        let root =
+            let registry = Registry.CurrentUser.OpenSubKey(RootField, true)
+
+            if isNull registry then
+                Registry.CurrentUser.CreateSubKey(RootField)
+            else registry
+
+        let setSecretKey input (key: RegistryKey) =
+            let value = key.GetValue(SecretKeyField) :?> string
+
+            if String.IsNullOrEmpty(value) |> not then
+                Error SecretKeyExits
+            else 
+                let value' = String255.value input
+                key.SetValue(SecretKeyField, value')
+                Ok key
+
+        let setPassword input (key: RegistryKey) =
+            let value = key.GetValue(PasswordField) :?> string
+
+            if not <| String.IsNullOrEmpty(value) then
+                Error MasterPasswordExists
+            else 
+                let value' = String255.value input
+                key.SetValue(PasswordField, value')
+                ((), key) |> Ok
+
+        setSecretKey secretKey root
+        |> Result.bind (setPassword password)
+        |> Result.map disconnect
             
     let getSecretKey (registryKey: RegistryKey) =
 
@@ -193,7 +233,6 @@ module RegEdit =
 [<RequireQualifiedAccess>]
 module internal Storage =
     open DataTypes
-    open Microsoft.Win32
     open ResultExtensions
     
     let deleteAccount password accountName =
@@ -202,7 +241,9 @@ module internal Storage =
             let (AccountName name) = accountName
             
             let delete (key: RegistryKey) =
-                let result = key.DeleteSubKeyTree(String255.value name)
+                let value = String255.value name
+                let result = key.DeleteSubKeyTree(value)
+
                 (result, key)
 
             let toError (ex: exn) =
@@ -237,14 +278,12 @@ module internal Storage =
 
                 let toAccount (name: string) : Account =
                     let childKey = key.OpenSubKey(name)
+                    let (AccountName accountName) = mapAccountName name
                     let userName = getValue childKey "UserName"
                     let password = getValue childKey "Password"
                     let description = getValue childKey "Description"
                     
-                    { AccountName = 
-                        match String255.create name with
-                            | Error error -> String255.fail "Account Name" error
-                            | Ok value -> value
+                    { AccountName = accountName
                       UserName = String255.createOptional userName
                       Password = String255.createOptional password
                       Description = String255.createOptional description }
@@ -311,13 +350,11 @@ module internal Crypto =
     open System.IO
     open System.Text
     open System.Security.Cryptography
+    open ResultExtensions
     open DataTypes
-
-    let private tryExecute func =
-        try
-            func()
-        with
-            | ex -> ex.ToInnerMessage() |> CryptoFailure |> Error
+    
+    let private toError (ex: exn) =
+        ex.ToInnerMessage() |> CryptoFailure
 
     let private transform key text getTransform getBytes transformArray =
 
@@ -341,33 +378,41 @@ module internal Crypto =
         stream.ToArray() |> transformArray
     
     let decrypt secretKey text : Result<DecryptedText, CandadoError> =
+        
+        let tryDecrypt =
+            
+            let func () =
+                let getTransform (des: TripleDESCryptoServiceProvider) = 
+                    des.CreateDecryptor()
 
-        let func () =
-            let getTransform (des: TripleDESCryptoServiceProvider) = 
-                des.CreateDecryptor()
+                let getBytes (EncryptedText text) = 
+                    System.Convert.FromBase64String(text)
 
-            let getBytes (EncryptedText text) = 
-                System.Convert.FromBase64String(text)
+                let transformArray array = 
+                    Encoding.Unicode.GetString(array) |> DecryptedText
 
-            let transformArray array = 
-                Encoding.Unicode.GetString(array) |> DecryptedText
+                transform secretKey text getTransform getBytes transformArray
 
-            transform secretKey text getTransform getBytes transformArray |> Ok
+            Result.tryCatch func toError
 
-        tryExecute func
+        tryDecrypt ()
 
     let encrypt secretKey text : Result<EncryptedText, CandadoError> =
 
-        let func () =
-            let getTransform (des: TripleDESCryptoServiceProvider) = 
-                des.CreateEncryptor()
+        let tryEncrypt =
+
+            let func () =
+                let getTransform (des: TripleDESCryptoServiceProvider) = 
+                    des.CreateEncryptor()
         
-            let getBytes (PlainText text) = 
-                Encoding.Unicode.GetBytes(text) 
+                let getBytes (PlainText text) = 
+                    Encoding.Unicode.GetBytes(text) 
 
-            let transformArray array = 
-                System.Convert.ToBase64String(array) |> EncryptedText
+                let transformArray array = 
+                    System.Convert.ToBase64String(array) |> EncryptedText
 
-            transform secretKey text getTransform getBytes transformArray |> Ok
+                transform secretKey text getTransform getBytes transformArray
 
-        tryExecute func
+            Result.tryCatch func toError
+
+        tryEncrypt ()

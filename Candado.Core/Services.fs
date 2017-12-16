@@ -1,55 +1,10 @@
 ﻿namespace Candado.Core
 
 open System
-open System.IO
-open System.Text
-open System.Security.Cryptography
 open Microsoft.Win32
 open ResultExtensions
 open DataTypes
-
-module RegEditInitializer =
-
-    type InitializeResult =
-        | SecretKeyExits
-        | MasterPasswordExists
-    
-    let Initialize secretKey password =
-        
-        let key = mapSecretKey secretKey
-        let psw = mapPassword password
-
-        let root =
-            let registry = Registry.CurrentUser.OpenSubKey(RegEdit.RootField, true)
-
-            if isNull registry then
-                Registry.CurrentUser.CreateSubKey(RegEdit.RootField)
-            else registry
-
-        let setSecretKey (SecretKey input) (key: RegistryKey) =
-            let value = key.GetValue(RegEdit.SecretKeyField) :?> string
-
-            if String.IsNullOrEmpty(value) |> not then
-                Error SecretKeyExits
-            else 
-                let value' = String255.value input
-                key.SetValue(RegEdit.SecretKeyField, value')
-                Ok key
-
-        let setPassword (Password input) (key: RegistryKey) =
-            let value = key.GetValue(RegEdit.PasswordField) :?> string
-
-            if not <| String.IsNullOrEmpty(value) then
-                Error MasterPasswordExists
-            else 
-                let value' = String255.value input
-                key.SetValue(RegEdit.PasswordField, value')
-                ((), key) |> Ok
-
-        setSecretKey key root
-        |> Result.bind (setPassword psw)
-        |> Result.map RegEdit.disconnect
-        
+  
 type ICryptoService =
     abstract member Decrypt : string -> string -> string
     abstract member Encrypt : string -> string -> string
@@ -58,7 +13,6 @@ type IAuthenticationService =
     abstract member Authenticate : string -> bool
 
 type IStorageService =
-    //abstract member Initialize : string -> string -> unit
     abstract member GetSecretKey : string -> string
     abstract member UpdateSecretKey : string -> string -> unit
     abstract member GetAllAccounts : string -> AccountDto []
