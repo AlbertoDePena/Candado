@@ -1,5 +1,4 @@
-﻿open System
-open ResultExtensions
+﻿open ResultExtensions
 open Candado.Core
 
 type Args = { 
@@ -22,6 +21,16 @@ let rec parseCmdLine args argsSoFar =
         parseCmdLine chunk.Tail newArgs
     | _ -> argsSoFar
     
+let parseArgs argv =
+    let args = argv |> Array.toList
+
+    let argsSoFar = { 
+        SecretKey = ""
+        Password = "" 
+    }
+
+    parseCmdLine args argsSoFar 
+
 let validateArgs args =
     if args.SecretKey = "" then
         Error "Please provide --SecretKey"
@@ -33,29 +42,23 @@ let validateArgs args =
 let main argv = 
 
     let log message =
-        printfn "%s" message; message
+        printfn "%s" message
     
-    let args = argv |> Array.toList
-
-    let argsSoFar = { 
-        SecretKey = ""
-        Password = "" 
-    }
-        
     let init args =
-        match RegEditInitializer.Initialize args.SecretKey args.Password with
-            | Ok _ -> Ok "Storage Initialized!"
+        let secretKey = mapSecretKey args.SecretKey
+        let password = mapPassword args.Password
+
+        match RegEdit.initialize secretKey password with
+            | Ok _ -> log "Storage Initialized!"
             | Error error ->
                 match error with
-                    | RegEditInitializer.SecretKeyExits -> Error "Secret Key already exists"
-                    | RegEditInitializer.MasterPasswordExists -> Error "Master Password already exists"
+                    | RegEdit.SecretKeyExits -> log "Secret Key already exists"
+                    | RegEdit.MasterPasswordExists -> log "Master Password already exists"
             
     let execute =
         validateArgs
-        >> Result.bind init
-        >> Result.valueOr log 
-        >> ignore
+        >> Result.map init
+        >> Result.valueOr log
         
-    parseCmdLine args argsSoFar 
-    |> execute
+    parseArgs argv |> execute
     0 //! return an integer exit code
