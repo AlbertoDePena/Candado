@@ -92,7 +92,7 @@ namespace Candado.Desktop.ViewModels
         {
             if (CanEdit && AccountViewModels.Any(vm => vm.HasChanges))
             {
-                var canClose = DialogService.Confirm("Are you sure you want to exit? You might have unsaved changes.");
+                var canClose = DialogService.Confirm("You have unsaved changes. Are you sure you want to exit?");
 
                 callback(canClose);
 
@@ -108,7 +108,7 @@ namespace Candado.Desktop.ViewModels
             {
                 if (Account == null) return;
 
-                if (!DialogService.Confirm("Are you sure you want to delete this account?")) return;
+                if (!DialogService.Confirm("Are you sure you want to delete this account even though it cannot be undone?")) return;
 
                 if (Account.IsPersisted)
                 {

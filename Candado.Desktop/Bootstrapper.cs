@@ -50,7 +50,7 @@ namespace Candado.Desktop
         {
             e.Handled = true;
 
-            MessageBox.Show(DataTypes.GetInnerMessage(e.Exception), "An error as occurred", MessageBoxButton.OK);
+            MessageBox.Show(DataTypes.GetInnerMessage(e.Exception), "An unhandled exception as occurred", MessageBoxButton.OK);
         }
     }
 }
