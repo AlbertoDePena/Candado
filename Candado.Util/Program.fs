@@ -38,6 +38,8 @@ let validateArgs args =
         Error "Please provide --Password"
     else Ok args
 
+let [<Literal>] ExitCode = 0
+
 [<EntryPoint>]
 let main argv = 
 
@@ -61,4 +63,5 @@ let main argv =
         >> Result.valueOr log
         
     parseArgs argv |> execute
-    0 //! return an integer exit code
+    
+    ExitCode

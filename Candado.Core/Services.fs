@@ -14,11 +14,9 @@ type IAuthenticationService =
 
 type IStorageService =
     abstract member GetSecretKey : string -> string
-    abstract member UpdateSecretKey : string -> string -> unit
     abstract member GetAllAccounts : string -> AccountDto []
     abstract member UpsertAccount : string -> AccountDto -> unit
     abstract member DeleteAccount : string -> string -> unit
-    //abstract member UpdatePassword : string -> unit
 
 type CryptoService() =
     
@@ -80,9 +78,6 @@ type StorageService() =
             |> Result.map toString
             |> Result.valueOr fail
             
-        member __.UpdateSecretKey password secretKey =
-            ()
-    
         member __.GetAllAccounts password =
 
             let toAccountDtos accounts =
@@ -118,7 +113,7 @@ type StorageService() =
 
         member __.UpsertAccount password account =
 
-            let toModel (AccountName name )(dto: AccountDto) : Account = {
+            let toModel (AccountName name) (dto: AccountDto) : Account = {
                 AccountName = name
                 UserName = String255.createOptional dto.UserName
                 Password = String255.createOptional dto.Password
