@@ -13,6 +13,25 @@
     
     <DockPanel>
         <ToolBar DockPanel.Dock="Top">
+            
+            <Button Style="{StaticResource ToolBarButton}" ToolTip="Export accounts" 
+                    Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}"
+                    cal:Message.Attach="ExportAccounts">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="../Images/export.png" />
+                </StackPanel>
+            </Button>
+
+            <Button Style="{StaticResource ToolBarButton}" ToolTip="Import accounts" 
+                    Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}"
+                    cal:Message.Attach="ImportAccounts">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="../Images/import.png" />
+                </StackPanel>
+            </Button>
+
+            <Separator Margin="0,5" Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}" />
+            
             <Button Style="{StaticResource ToolBarButton}" ToolTip="Save all accounts" 
                     Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}"
                     cal:Message.Attach="SaveChanges">
@@ -45,6 +64,8 @@
                     <Image Source="../Images/password-view.png" />
                 </StackPanel>
             </Button>
+
+           
         </ToolBar>
 
         <StatusBar DockPanel.Dock="Bottom">

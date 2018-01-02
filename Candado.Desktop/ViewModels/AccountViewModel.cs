@@ -11,7 +11,7 @@ namespace Candado.Desktop.ViewModels
         private string _password;
         private string _userName;
 
-        public AccountViewModel(Dtos.AccountDto account, Func<string, string> decrypt)
+        public AccountViewModel(Dtos.AccountDto account, Func<string, string> decrypt, bool canEdit = false)
         {
             if (account == null)
                 throw new ArgumentNullException(nameof(account));
@@ -24,7 +24,7 @@ namespace Candado.Desktop.ViewModels
             _password = String.IsNullOrEmpty(account.Password) ? string.Empty : decrypt(account.Password);
             _description = account.Description;
 
-            CanEditName = false;
+            CanEditName = canEdit;
             HasChanges = false;
         }
 

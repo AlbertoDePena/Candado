@@ -1,14 +1,17 @@
 ﻿using Caliburn.Micro;
 using Candado.Core;
 using Candado.Desktop.Contracts;
+using Newtonsoft.Json;
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Windows.Data;
+using System.Windows.Forms;
 
 namespace Candado.Desktop.ViewModels
 {
-    public class AccountsViewModel : Screen, IView
+    public class AccountsViewModel : Caliburn.Micro.Screen, IView
     {
         private readonly ICryptoService CryptoService;
         private readonly IDialogService DialogService;
@@ -76,6 +79,82 @@ namespace Candado.Desktop.ViewModels
         private CollectionViewSource AccountViewSource { get; }
 
         private string Password { get; }
+
+        public void ImportAccounts()
+        {
+            try
+            {
+                if (AccountViewModels.Any(vm => vm.HasChanges))
+                {
+                    DialogService.Notify("You have unsaved changes. Please save changes before importing accounts.");
+
+                    return;
+                }
+                
+                using (var dialog = new OpenFileDialog
+                {
+                    Filter = "JSON files (*.json)|*.json"
+                })
+                {
+                    if (dialog.ShowDialog() != DialogResult.OK) return;
+
+                    var json = File.ReadAllText(dialog.FileName);
+
+                    var data = JsonConvert.DeserializeObject<Dtos.AccountDto[]>(json);
+
+                    string dencrypt(string text) => CryptoService.Decrypt(StorageService.GetSecretKey(Password), text);
+
+                    foreach (var item in data)
+                    {
+                        var found = AccountViewModels.Any(vm => vm.AccountName == item.AccountName);
+
+                        item.AccountName = found ? $"{item.AccountName} - duplicate" : item.AccountName;
+
+                        AccountViewModels.Add(new AccountViewModel(item, dencrypt, true));
+                    }
+
+                    Account = AccountViewModels.FirstOrDefault();
+
+                    Status = "Accounts imported...";
+                }
+            }
+            catch (Exception e)
+            {
+                DialogService.Exception(e);
+            }
+        }
+
+        public void ExportAccounts()
+        {
+            try
+            {
+                if (AccountViewModels.Any(vm => vm.HasChanges))
+                {
+                    DialogService.Notify("You have unsaved changes. Please save changes before exporting accounts.");
+
+                    return;
+                }
+
+                using (var dialog = new FolderBrowserDialog())
+                {
+                    if (dialog.ShowDialog() != DialogResult.OK) return;
+                    
+                    var filePath = $@"{dialog.SelectedPath}\exported-accounts-{DateTime.Now.Ticks}.json";
+
+                    string encrypt(string text) => CryptoService.Encrypt(StorageService.GetSecretKey(Password), text);
+
+                    var data = AccountViewModels.Select(vm => vm.ViewModelToModel(encrypt));
+
+                    File.WriteAllText(filePath, JsonConvert.SerializeObject(data));
+                    
+                    Status = "Accounts exported...";
+                }
+            }
+            catch (Exception e)
+            {
+                DialogService.Exception(e);
+            }
+        }
 
         public void AddAccount()
         {

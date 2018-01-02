@@ -6,6 +6,7 @@ open Microsoft.Win32
 [<AutoOpen>]
 module Dtos =
 
+    [<CLIMutable>]
     type AccountDto = {
         AccountName: string
         UserName: string
@@ -289,8 +290,7 @@ module internal Storage =
                       Description = String255.createOptional description }
 
                 let accounts =
-                    key.GetSubKeyNames() 
-                    |> Array.map toAccount
+                    key.GetSubKeyNames() |> Array.map toAccount
                     
                 (accounts, key)
 
@@ -347,6 +347,7 @@ module internal Storage =
             
 [<RequireQualifiedAccess>]
 module internal Crypto =
+    open System
     open System.IO
     open System.Text
     open System.Security.Cryptography
@@ -386,7 +387,7 @@ module internal Crypto =
                     des.CreateDecryptor()
 
                 let getBytes (EncryptedText text) = 
-                    System.Convert.FromBase64String(text)
+                    Convert.FromBase64String(text)
 
                 let transformArray array = 
                     Encoding.Unicode.GetString(array) |> DecryptedText
@@ -409,7 +410,7 @@ module internal Crypto =
                     Encoding.Unicode.GetBytes(text) 
 
                 let transformArray array = 
-                    System.Convert.ToBase64String(array) |> EncryptedText
+                    Convert.ToBase64String(array) |> EncryptedText
 
                 transform secretKey text getTransform getBytes transformArray
 
