@@ -38,8 +38,6 @@ let validateArgs args =
         Error "Please provide --Password"
     else Ok args
 
-let [<Literal>] ExitCode = 0
-
 [<EntryPoint>]
 let main argv = 
 
@@ -49,19 +47,18 @@ let main argv =
     let init args =
         let secretKey = mapSecretKey args.SecretKey
         let password = mapPassword args.Password
+        let result = RegEdit.initialize secretKey password
 
-        match RegEdit.initialize secretKey password with
+        match result with
             | Ok _ -> log "Storage Initialized!"
             | Error error ->
                 match error with
                     | RegEdit.SecretKeyExits -> log "Secret Key already exists"
                     | RegEdit.MasterPasswordExists -> log "Master Password already exists"
-            
-    let execute =
-        validateArgs
-        >> Result.map init
-        >> Result.valueOr log
-        
-    parseArgs argv |> execute
+           
+    parseArgs argv
+    |> validateArgs
+    |> Result.map init
+    |> Result.valueOr log
     
-    ExitCode
+    0 //! exit code
