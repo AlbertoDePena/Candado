@@ -22,7 +22,6 @@ namespace Candado.Desktop.ViewModels
             IAuthenticationService authenticationService)
         {
             DisplayName = "Candado";
-
             StorageService = storageService;
             DialogService = dialogService;
             CryptoService = cryptoService;
@@ -36,8 +35,7 @@ namespace Candado.Desktop.ViewModels
 
         private bool CanEdit => Environment.GetCommandLineArgs().Any(a => a == CommandLineFlag);
 
-        public void Handle(LoginEvent @event)
-            => ActivateItem(new AccountsViewModel(StorageService, DialogService, CryptoService, CanEdit, @event.Password));
+        public void Handle(LoginEvent e) => ActivateItem(new AccountsViewModel(StorageService, DialogService, CryptoService, CanEdit, e.Password));
 
         protected override void OnDeactivate(bool close)
         {

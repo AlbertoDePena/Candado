@@ -35,16 +35,11 @@ namespace Candado.Desktop.ViewModels
 
         public void Login()
         {
+            if (!CanLogin) return;
+
             try
             {
-                if (!CanLogin) return;
-                
-                if (!AuthenticationService.Authenticate(Password))
-                {
-                    DialogService.Error("Password is invalid.");
-
-                    return;
-                }
+                AuthenticationService.Authenticate(Password);
 
                 EventAggregator.PublishOnUIThread(new LoginEvent(Password));
             }

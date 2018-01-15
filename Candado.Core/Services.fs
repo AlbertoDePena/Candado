@@ -10,7 +10,7 @@ type ICryptoService =
     abstract member Encrypt : string -> string -> string
         
 type IAuthenticationService =
-    abstract member Authenticate : string -> bool
+    abstract member Authenticate : string -> unit
 
 type IStorageService =
     abstract member GetSecretKey : string -> string
@@ -55,7 +55,7 @@ type AuthenticationService() =
         member __.Authenticate password =
             
             let disconnect (root: RegistryKey) =
-                RegEdit.disconnect (Ok true, root)
+                RegEdit.disconnect (Ok (), root)
 
             let psw = mapPassword password 
 

@@ -71,7 +71,7 @@ namespace Candado.Desktop.ViewModels
             {
                 _status = value;
                 NotifyOfPropertyChange();
-                NotifyOfPropertyChange(() => HasStatus);
+                NotifyOfPropertyChange(nameof(HasStatus));
             }
         }
 
@@ -174,9 +174,7 @@ namespace Candado.Desktop.ViewModels
         {
             if (CanEdit && AccountViewModels.Any(vm => vm.HasChanges))
             {
-                var canClose = DialogService.Confirm("You have unsaved changes. Are you sure you want to exit?");
-
-                callback(canClose);
+                callback(DialogService.Confirm("You have unsaved changes. Are you sure you want to exit?"));
 
                 return;
             }
