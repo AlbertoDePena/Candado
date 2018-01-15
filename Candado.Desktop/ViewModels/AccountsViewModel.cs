@@ -71,8 +71,11 @@ namespace Candado.Desktop.ViewModels
             {
                 _status = value;
                 NotifyOfPropertyChange();
+                NotifyOfPropertyChange(() => HasStatus);
             }
         }
+
+        public bool HasStatus => !string.IsNullOrEmpty(Status);
 
         internal BindableCollection<AccountViewModel> AccountViewModels { get; }
 

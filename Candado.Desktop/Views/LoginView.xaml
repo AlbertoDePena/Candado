@@ -3,8 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
+
     <Grid FocusManager.FocusedElement="{Binding ElementName=Login}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition />
@@ -14,18 +16,30 @@
         <Grid.RowDefinitions>
             <RowDefinition />
             <RowDefinition Height="120" />
-            <RowDefinition Height="40" />
-            <RowDefinition Height="40" />
+            <RowDefinition Height="35" />
+            <RowDefinition Height="5" />
+            <RowDefinition Height="35" />
             <RowDefinition />
         </Grid.RowDefinitions>
 
-        <Image Grid.Row="1" Grid.Column="1" Source="../Images/password.png" Width="90" Height="90"/>
+        <Image Grid.Row="1" Grid.Column="1" 
+               Source="../Images/password.png" 
+               Width="60" Height="60"/>
 
         <DockPanel Grid.Row="2" Grid.Column="1" ToolTip="Password">
-            <Image Source="../Images/password.png" />
-            <PasswordBox x:Name="Password"/>
+            <md:PackIcon 
+                Margin="0 0 8 5" 
+                Kind="Key" 
+                HorizontalAlignment="Right" 
+                VerticalAlignment="Bottom" />
+            <PasswordBox x:Name="Password"
+                         md:HintAssist.Hint="Password"
+                         Style="{StaticResource MaterialDesignFloatingHintPasswordBox}"/>
         </DockPanel>
 
-        <Button x:Name="Login" Grid.Row="3" Grid.Column="1" Content="Login" />
+
+        <Button x:Name="Login" 
+                Grid.Row="4" Grid.Column="1" 
+                Content="LOGIN" />
     </Grid>
 </UserControl>
