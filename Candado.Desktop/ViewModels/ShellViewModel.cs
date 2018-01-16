@@ -2,14 +2,11 @@
 using Candado.Core;
 using Candado.Desktop.Contracts;
 using Candado.Desktop.Events;
-using System;
-using System.Linq;
 
 namespace Candado.Desktop.ViewModels
 {
     public class ShellViewModel : Conductor<IView>, IShell, IHandle<LoginEvent>
     {
-        private const string CommandLineFlag = "-EditMode";
         private readonly IAuthenticationService AuthenticationService;
         private readonly IStorageService StorageService;
         private readonly ICryptoService CryptoService;
@@ -33,9 +30,7 @@ namespace Candado.Desktop.ViewModels
             ActivateItem(new LoginViewModel(EventAggregator, AuthenticationService, DialogService));
         }
 
-        private bool CanEdit => Environment.GetCommandLineArgs().Any(a => a == CommandLineFlag);
-
-        public void Handle(LoginEvent e) => ActivateItem(new AccountsViewModel(StorageService, DialogService, CryptoService, CanEdit, e.Password));
+        public void Handle(LoginEvent e) => ActivateItem(new AccountsViewModel(StorageService, DialogService, CryptoService, e.Password));
 
         protected override void OnDeactivate(bool close)
         {

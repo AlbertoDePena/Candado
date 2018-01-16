@@ -15,34 +15,30 @@
     <DockPanel>
         <ToolBarTray DockPanel.Dock="Top">
             <ToolBar Style="{DynamicResource MaterialDesignToolBar}" ClipToBounds="False">
-                <Button ToolTip="Add new account" ToolBar.OverflowMode="AsNeeded"
-                        Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}"
+                <Button ToolTip="Add new account" 
+                        ToolBar.OverflowMode="AsNeeded"
                         cal:Message.Attach="AddAccount">
                     <md:PackIcon Kind="PlusBox" />
                 </Button>
-                <Button ToolTip="Delete selected account" ToolBar.OverflowMode="AsNeeded"
-                        Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}"
+                <Button ToolTip="Delete selected account" 
                         cal:Message.Attach="DeleteAccount">
                     <md:PackIcon Kind="Delete" />
                 </Button>
                 <Button ToolTip="Save all accounts" 
-                        Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}"
                         cal:Message.Attach="SaveChanges">
                     <md:PackIcon Kind="ContentSaveAll" />
                 </Button>
-                <Separator Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}" />
-                <Button ToolTip="View selected account's password" ToolBar.OverflowMode="AsNeeded"
+                <Separator />
+                <Button ToolTip="View selected account's password" 
                         cal:Message.Attach="ViewAccount">
                     <md:PackIcon Kind="AccountKey" />
                 </Button>
-                <Separator Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}" />
+                <Separator />
                 <Button ToolTip="Export accounts" 
-                        Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}"
                         cal:Message.Attach="ExportAccounts">
                     <md:PackIcon Kind="Export" />
                 </Button>
                 <Button ToolTip="Import accounts" 
-                        Visibility="{Binding CanEdit, Converter={StaticResource VisibilityConverter}}"
                         cal:Message.Attach="ImportAccounts">
                     <md:PackIcon Kind="Import" />
                 </Button>

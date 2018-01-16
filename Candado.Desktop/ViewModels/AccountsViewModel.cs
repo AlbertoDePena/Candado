@@ -16,19 +16,19 @@ namespace Candado.Desktop.ViewModels
         private readonly ICryptoService CryptoService;
         private readonly IDialogService DialogService;
         private readonly IStorageService StorageService;
+        private readonly System.Timers.Timer Timer;
         private AccountViewModel _account;
         private string _filter;
         private string _status;
 
         public AccountsViewModel(
             IStorageService storageService, IDialogService dialogService,
-            ICryptoService cryptoService, bool canEdit, string password)
+            ICryptoService cryptoService, string password)
         {
             StorageService = storageService;
             DialogService = dialogService;
             CryptoService = cryptoService;
             Password = password;
-            CanEdit = canEdit;
 
             AccountViewModels = new BindableCollection<AccountViewModel>();
             AccountViewSource = new CollectionViewSource
@@ -37,6 +37,14 @@ namespace Candado.Desktop.ViewModels
             };
             AccountViewSource.Filter -= AccountViewSource_Filter;
             AccountViewSource.Filter += AccountViewSource_Filter;
+
+            Timer = new System.Timers.Timer(5000)
+            {
+                AutoReset = true,
+                Enabled = true
+            };
+            Timer.Elapsed -= Timer_Elapsed;
+            Timer.Elapsed += Timer_Elapsed;
         }
 
         public AccountViewModel Account
@@ -51,8 +59,6 @@ namespace Candado.Desktop.ViewModels
 
         public ICollectionView Accounts => AccountViewSource.View;
 
-        public bool CanEdit { get; }
-
         public string Filter
         {
             get { return _filter; }
@@ -63,6 +69,8 @@ namespace Candado.Desktop.ViewModels
                 NotifyOfPropertyChange();
             }
         }
+
+        public bool HasStatus => !string.IsNullOrEmpty(Status);
 
         public string Status
         {
@@ -75,89 +83,11 @@ namespace Candado.Desktop.ViewModels
             }
         }
 
-        public bool HasStatus => !string.IsNullOrEmpty(Status);
-
         internal BindableCollection<AccountViewModel> AccountViewModels { get; }
 
         private CollectionViewSource AccountViewSource { get; }
 
         private string Password { get; }
-
-        public void ImportAccounts()
-        {
-            try
-            {
-                if (AccountViewModels.Any(vm => vm.HasChanges))
-                {
-                    DialogService.Notify("You have unsaved changes. Please save changes before importing accounts.");
-
-                    return;
-                }
-                
-                using (var dialog = new OpenFileDialog
-                {
-                    Filter = "JSON files (*.json)|*.json"
-                })
-                {
-                    if (dialog.ShowDialog() != DialogResult.OK) return;
-
-                    var json = File.ReadAllText(dialog.FileName);
-
-                    var data = JsonConvert.DeserializeObject<Dtos.AccountDto[]>(json);
-
-                    string dencrypt(string text) => CryptoService.Decrypt(StorageService.GetSecretKey(Password), text);
-
-                    foreach (var item in data)
-                    {
-                        var found = AccountViewModels.Any(vm => vm.AccountName == item.AccountName);
-
-                        item.AccountName = found ? $"{item.AccountName} - duplicate" : item.AccountName;
-
-                        AccountViewModels.Add(new AccountViewModel(item, dencrypt, true));
-                    }
-
-                    Account = AccountViewModels.FirstOrDefault();
-
-                    Status = "Accounts imported...";
-                }
-            }
-            catch (Exception e)
-            {
-                DialogService.Exception(e);
-            }
-        }
-
-        public void ExportAccounts()
-        {
-            try
-            {
-                if (AccountViewModels.Any(vm => vm.HasChanges))
-                {
-                    DialogService.Notify("You have unsaved changes. Please save changes before exporting accounts.");
-
-                    return;
-                }
-
-                using (var dialog = new FolderBrowserDialog())
-                {
-                    if (dialog.ShowDialog() != DialogResult.OK) return;
-                    
-                    var filePath = $@"{dialog.SelectedPath}\exported-accounts-{DateTime.Now.Ticks}.json";
-
-                    string encrypt(string text) => CryptoService.Encrypt(StorageService.GetSecretKey(Password), text);
-
-                    var data = AccountViewModels.Select(vm => vm.ViewModelToModel(encrypt));
-
-                    File.WriteAllText(filePath, JsonConvert.SerializeObject(data));
-                    
-                    Status = "Accounts exported...";
-                }
-            }
-            catch (Exception e)
-            {
-                DialogService.Exception(e);
-            }
-        }
 
         public void AddAccount()
         {
@@ -172,7 +102,7 @@ namespace Candado.Desktop.ViewModels
 
         public override void CanClose(Action<bool> callback)
         {
-            if (CanEdit && AccountViewModels.Any(vm => vm.HasChanges))
+            if (AccountViewModels.Any(vm => vm.HasChanges))
             {
                 callback(DialogService.Confirm("You have unsaved changes. Are you sure you want to exit?"));
 
@@ -200,6 +130,82 @@ namespace Candado.Desktop.ViewModels
                 AccountViewModels.Remove(Account);
 
                 Account = AccountViewModels.FirstOrDefault();
+            }
+            catch (Exception e)
+            {
+                DialogService.Exception(e);
+            }
+        }
+
+        public void ExportAccounts()
+        {
+            try
+            {
+                if (AccountViewModels.Any(vm => vm.HasChanges))
+                {
+                    DialogService.Notify("You have unsaved changes. Please save changes before exporting accounts.");
+
+                    return;
+                }
+
+                using (var dialog = new FolderBrowserDialog())
+                {
+                    if (dialog.ShowDialog() != DialogResult.OK) return;
+
+                    var filePath = $@"{dialog.SelectedPath}\exported-accounts-{DateTime.Now.Ticks}.json";
+
+                    string encrypt(string text) => CryptoService.Encrypt(StorageService.GetSecretKey(Password), text);
+
+                    var data = AccountViewModels.Select(vm => vm.ViewModelToModel(encrypt));
+
+                    File.WriteAllText(filePath, JsonConvert.SerializeObject(data));
+
+                    Status = "Accounts exported...";
+                }
+            }
+            catch (Exception e)
+            {
+                DialogService.Exception(e);
+            }
+        }
+
+        public void ImportAccounts()
+        {
+            try
+            {
+                if (AccountViewModels.Any(vm => vm.HasChanges))
+                {
+                    DialogService.Notify("You have unsaved changes. Please save changes before importing accounts.");
+
+                    return;
+                }
+
+                using (var dialog = new OpenFileDialog
+                {
+                    Filter = "JSON files (*.json)|*.json"
+                })
+                {
+                    if (dialog.ShowDialog() != DialogResult.OK) return;
+
+                    var json = File.ReadAllText(dialog.FileName);
+
+                    var data = JsonConvert.DeserializeObject<Dtos.AccountDto[]>(json);
+
+                    string dencrypt(string text) => CryptoService.Decrypt(StorageService.GetSecretKey(Password), text);
+
+                    foreach (var item in data)
+                    {
+                        var found = AccountViewModels.Any(vm => vm.AccountName == item.AccountName);
+
+                        item.AccountName = found ? $"{item.AccountName} - duplicate" : item.AccountName;
+
+                        AccountViewModels.Add(new AccountViewModel(item, dencrypt, true));
+                    }
+
+                    Account = AccountViewModels.FirstOrDefault();
+
+                    Status = "Accounts imported...";
+                }
             }
             catch (Exception e)
             {
@@ -262,6 +268,7 @@ namespace Candado.Desktop.ViewModels
         protected override void OnDeactivate(bool close)
         {
             AccountViewSource.Filter -= AccountViewSource_Filter;
+            Timer.Elapsed -= Timer_Elapsed;
 
             base.OnDeactivate(close);
         }
@@ -278,11 +285,7 @@ namespace Candado.Desktop.ViewModels
 
                 foreach (var item in items)
                 {
-                    var vm = new AccountViewModel(item, dencrypt);
-
-                    vm.SetReadonly(!CanEdit);
-
-                    AccountViewModels.Add(vm);
+                    AccountViewModels.Add(new AccountViewModel(item, dencrypt));
                 }
 
                 Account = AccountViewModels.FirstOrDefault();
@@ -305,6 +308,13 @@ namespace Candado.Desktop.ViewModels
             }
 
             e.Accepted = viewModel.AccountName.ToLower().Contains(Filter.ToLower());
+        }
+
+        private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            if (String.IsNullOrEmpty(Status)) return;
+
+            Status = string.Empty;
         }
     }
 }
