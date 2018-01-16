@@ -61,18 +61,33 @@ namespace Candado.Desktop.ViewModels
 
         public bool HasChanges { get; private set; }
 
-        public bool IsPersisted => !CanEditName;
+        public bool IsPersisted
+        {
+            get
+            {
+                if (Readonly)
+                {
+                    return true;
+                }
+
+                return !CanEditName;
+            }
+        }
 
         public string Password
         {
             get { return _password; }
             set
             {
+                if (Readonly) return;
+
                 _password = value;
                 HasChanges = true;
                 NotifyOfPropertyChange();
             }
         }
+
+        public bool Readonly { get; private set; }
 
         public string UserName
         {
@@ -85,7 +100,15 @@ namespace Candado.Desktop.ViewModels
             }
         }
 
-        public bool CanSave() => !string.IsNullOrEmpty(AccountName);
+        public bool CanSave()
+        {
+            if (Readonly)
+            {
+                return false;
+            }
+
+            return !string.IsNullOrEmpty(AccountName);
+        }
 
         public Dtos.AccountDto ViewModelToModel(Func<string, string> encrypt)
         {
@@ -101,5 +124,7 @@ namespace Candado.Desktop.ViewModels
 
             NotifyOfPropertyChange(nameof(IsPersisted));
         }
+
+        internal void SetReadonly(bool value) => Readonly = value;
     }
 }

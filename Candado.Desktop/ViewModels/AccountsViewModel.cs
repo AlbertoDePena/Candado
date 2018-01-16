@@ -278,7 +278,11 @@ namespace Candado.Desktop.ViewModels
 
                 foreach (var item in items)
                 {
-                    AccountViewModels.Add(new AccountViewModel(item, dencrypt));
+                    var vm = new AccountViewModel(item, dencrypt);
+
+                    vm.SetReadonly(!CanEdit);
+
+                    AccountViewModels.Add(vm);
                 }
 
                 Account = AccountViewModels.FirstOrDefault();

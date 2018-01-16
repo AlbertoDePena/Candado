@@ -33,6 +33,7 @@
                 HorizontalAlignment="Right"
                 VerticalAlignment="Bottom" />
             <TextBox x:Name="UserName"
+                     IsReadOnly="{Binding Readonly}"
                      md:HintAssist.Hint="User Name / Email"
                      Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
         </DockPanel>
@@ -49,8 +50,9 @@
         </DockPanel>
 
         <TextBox x:Name="Description" 
+                 IsReadOnly="{Binding Readonly}"
                     ToolTip="Description" Grid.Row="3" Margin="0 25 0 0"
-                    VerticalAlignment="Top" Height="150" AcceptsReturn="True"
+                    AcceptsReturn="True"
                     TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
                     md:HintAssist.Hint="Description"
                     Style="{StaticResource MaterialDesignTextAreaTextBox}" />
