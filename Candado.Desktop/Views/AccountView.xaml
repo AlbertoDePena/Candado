@@ -1,38 +1,58 @@
 ﻿<UserControl x:Class="Candado.Desktop.Views.AccountView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             mc:Ignorable="d" 
-             d:DesignHeight="300" d:DesignWidth="300">
-    <Grid>
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="400" d:DesignWidth="300">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
-            <RowDefinition Height="40"/>
-            <RowDefinition Height="40"/>
-            <RowDefinition Height="40"/>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="40" />
+            <RowDefinition Height="40" />
             <RowDefinition />
         </Grid.RowDefinitions>
 
         <DockPanel Grid.Row="0" ToolTip="Account Name">
-            <Image Source="../Images/account.png" />
-            <TextBox x:Name="AccountName" IsReadOnly="{Binding IsPersisted, UpdateSourceTrigger=PropertyChanged}" />
+            <md:PackIcon
+                Kind="AccountBox"
+                Margin="0 0 8 5"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom" />
+            <TextBox x:Name="AccountName"
+                     IsReadOnly="{Binding IsPersisted, UpdateSourceTrigger=PropertyChanged}"
+                     md:HintAssist.Hint="Account Name"
+                     Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
         </DockPanel>
 
         <DockPanel Grid.Row="1" ToolTip="User Name / Email">
-            <Image Source="../Images/user.png" />
-            <TextBox x:Name="UserName" />
+            <md:PackIcon
+                Kind="Account"
+                Margin="0 0 8 5"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom" />
+            <TextBox x:Name="UserName"
+                     md:HintAssist.Hint="User Name / Email"
+                     Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
         </DockPanel>
 
         <DockPanel Grid.Row="2" ToolTip="Password">
-            <Image Source="../Images/password.png" />
-            <PasswordBox x:Name="Password" />
+            <md:PackIcon
+                Kind="Key"
+                Margin="0 0 8 5"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom" />
+            <PasswordBox x:Name="Password"
+                         md:HintAssist.Hint="Password"
+                         Style="{StaticResource MaterialDesignFloatingHintPasswordBox}" />
         </DockPanel>
 
-        <ScrollViewer Grid.Row="3" 
-                          HorizontalScrollBarVisibility="Disabled" 
-                          VerticalScrollBarVisibility="Auto">
-            <TextBox Style="{StaticResource MultiLine}" ToolTip="Description"
-                     x:Name="Description" />
-        </ScrollViewer>
+        <TextBox x:Name="Description" 
+                    ToolTip="Description" Grid.Row="3" Margin="0 25 0 0"
+                    AcceptsReturn="True"
+                    TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                    md:HintAssist.Hint="Description"
+                    Style="{StaticResource MaterialDesignTextAreaTextBox}" />
     </Grid>
 </UserControl>

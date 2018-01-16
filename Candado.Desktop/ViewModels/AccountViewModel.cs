@@ -73,7 +73,7 @@ namespace Candado.Desktop.ViewModels
                 NotifyOfPropertyChange();
             }
         }
-
+        
         public string UserName
         {
             get { return _userName; }
